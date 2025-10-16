@@ -1,0 +1,523 @@
+<!doctype html>
+<!--
+Voca Duo+ — Single-file Mobile-Optimized Duolingo-style Vocabulary App
+How to use:
+1) Put this file (index.html), word_list.xlsx, and logo.png in the same folder (local server root or GitHub Pages repo).
+2) Make sure WORDS_XLSX_URL below points to "./word_list.xlsx" (or an absolute URL on the same origin).
+3) Open this file via a local HTTP server (e.g., python -m http.server 8080 → http://localhost:8080/index.html)
+Notes:
+- Excel schema (row1 may or may not be header):
+  A: word | B: meaning_ko | C: korean_pron | D: ipa | E: example
+- Data are kept only in memory. localStorage stores only progress/settings/quiz results.
+- External dependency: SheetJS (xlsx) via CDN below. If it fails or the file is missing, app enters Demo Mode (10 sample words).
+- Slicing: 4,500 rows are split into 30 stages × 150 words from the top in order (1–150 => stage 1, …, 4351–4500 => stage 30).
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"/>
+<title>Voca Duo+ — Duolingo-Style Vocab</title>
+<link rel="icon" href="logo.png"/>
+<style>
+:root{
+  --primary:#58CC02; --accent:#FFD166; --accent2:#73E0A9; --accent3:#A3D5FF; --accent4:#FFB3C6;
+  --text:#233042; --bg:#F7FAF7; --white:#fff;
+  --ok:#58CC02; --bad:#FF6B6B; --info:#3A86FF;
+  --shadow:0 6px 18px rgba(0,0,0,.08);
+  --radius:18px;
+  --br:#E6EFE5;           /* pastel border */
+  --br-info:#CFE0FF;      /* pastel blue border */
+  --br-accent:#FFE6AE;    /* pastel amber border */
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Apple SD Gothic Neo, sans-serif;
+  background:var(--bg); color:var(--text); -webkit-tap-highlight-color: transparent;
+}
+.container{max-width:920px;margin:0 auto;padding:16px 16px 96px}
+.appbar{
+  position:sticky; top:0; z-index:30; background:linear-gradient(180deg, rgba(247,250,247,0.95), rgba(247,250,247,0.85));
+  backdrop-filter: saturate(1.2) blur(6px);
+  display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-bottom:1px solid rgba(0,0,0,.04);
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px}
+.brand img.logo{width:34px;height:34px;border-radius:8px;object-fit:cover;box-shadow:var(--shadow);display:block}
+.icon-btn{border:none;background:var(--white);padding:10px 12px;border-radius:999px;box-shadow:var(--shadow);font-size:18px}
+.icon-btn:active{transform:scale(.97)}
+.grid2{display:grid;grid-template-columns:1fr;gap:14px;margin:18px 0}
+@media(min-width:520px){.grid2{grid-template-columns:1fr 1fr}}
+.card{
+  background:var(--white); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);
+  display:flex; flex-direction:column; gap:10px; min-height:86px; border:1px solid var(--br);
+}
+.cta{display:flex; align-items:center; justify-content:center; gap:10px; font-weight:700; font-size:18px}
+.badge{background:var(--accent); padding:6px 10px;border-radius:999px;font-size:12px}
+.stage-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(min-width:540px){.stage-grid{grid-template-columns:repeat(5,1fr)}}
+.stage{
+  background:var(--white); border-radius:16px; padding:14px; box-shadow:var(--shadow);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:84px;border:1px solid var(--br);
+}
+.stage h4{margin:2px 0 4px;font-size:18px;letter-spacing:.5px}
+.stage .small{opacity:.7}
+.progress{width:100%; height:10px; background:#E9F6E7; border-radius:999px; overflow:hidden; border:1px solid #E8F6E6}
+.progress > span{display:block; height:100%; width:0%; background:linear-gradient(90deg, var(--primary), #7AE400)}
+.small{font-size:12px;opacity:.8}
+.primary{background:var(--primary);color:#fff}
+.accent{background:var(--accent)}
+.btn{border:none;padding:14px 16px;border-radius:14px; box-shadow:var(--shadow); font-weight:700}
+.btn:active{transform:scale(.98)}
+.btn-outline{background:transparent;border:2px solid var(--primary);color:var(--primary)}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hidden{display:none !important}
+.center{display:grid;place-items:center}
+.spinner{width:48px;height:48px;border:5px solid #e6f4e5;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:100;
+  background:#233042; color:#fff; padding:12px 16px; border-radius:12px; box-shadow:var(--shadow); font-size:14px
+}
+.snack{animation:up .25s ease; } @keyframes up{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+/* Views */
+.view{display:none}
+.view.active{display:block}
+.topbar{
+  display:flex; align-items:center; justify-content:space-between; gap:10px; margin:10px 0 14px;
+}
+.topbar .back{padding:10px 14px;border-radius:12px;border:1px solid var(--br);background:#fff;box-shadow:var(--shadow)}
+.timer-wrap{flex:1;margin:0 10px}
+.time-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-bottom:6px}
+.timebar{height:10px;background:#E3EDFF;border-radius:999px;overflow:hidden;border:1px solid var(--br-info)}
+.timebar>span{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--info),#7ab1ff)}
+/* Study */
+.study-card,.quiz-card{
+  background:var(--white); border-radius:18px; padding:18px; box-shadow:var(--shadow); min-height:280px; display:flex; flex-direction:column; gap:10px;
+  border:1px solid var(--br);
+}
+.word{font-size:36px;font-weight:900;letter-spacing:.3px}
+.meta{display:flex;justify-content:space-between;gap:10px;color:#555}
+.meta div{font-size:14px}
+.example{background:#F6FBFF;border:1px dashed var(--br-info);padding:10px;border-radius:12px;font-size:14px}
+.meaning{background:#FFF8EC;border:1px dashed var(--br-accent);padding:10px;border-radius:12px;font-size:16px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
+.toggle{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--br);border-radius:999px;padding:8px 12px}
+.switch{appearance:none;width:38px;height:22px;background:#dfeadf;border-radius:999px;position:relative;outline:none;cursor:pointer;border:1px solid #cfe3cd}
+.switch:checked{background:var(--primary)}
+.switch:before{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:all .2s;border:1px solid var(--br)}
+.switch:checked:before{left:18px}
+.ctrl-row{display:flex;gap:8px;flex-wrap:wrap}
+.ctrl-row .btn{flex:1;min-width:140px}
+/* Quiz */
+.quiz-q{font-size:18px;font-weight:700}
+.input-row{display:flex;gap:8px}
+.input-row input{flex:1;padding:14px 12px;border-radius:12px;border:1.5px solid var(--br);font-size:16px}
+.input-row input:focus{outline:none;border-color:#AEE39C}
+.answer-anim.ok{animation:bounce .4s ease}
+.answer-anim.bad{animation:shake .35s ease}
+@keyframes bounce{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes shake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
+.hint{background:#FFF8EC;border:1px dashed var(--br-accent);padding:10px;border-radius:12px;font-size:14px;display:none}
+.res-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.res-item{background:#fff;padding:10px;border-radius:12px;box-shadow:var(--shadow);border:1px solid var(--br)}
+/* Footer space */
+footer{height:24px}
+/* Dark mode (optional) */
+.dark body{background:#0c1110;color:#e9f6e7}
+.dark .appbar{background:linear-gradient(180deg, rgba(12,17,16,0.95), rgba(12,17,16,0.85)); border-bottom:1px solid rgba(255,255,255,.06)}
+.dark .card,.dark .stage,.dark .study-card,.dark .quiz-card,.dark .back,.dark .btn{background:#111a18;color:#e9f6e7;border-color:#193a2c}
+.dark .input-row input{background:#0f1815;color:#e9f6e7;border-color:#1d3c2e}
+.dark .example{background:#0e1626;border-color:#243a62}
+.dark .meaning{background:#1b1408;border-color:#6b521f}
+.dark .toast{background:#0f141e}
+</style>
+</head>
+<body>
+<div class="appbar">
+  <div class="brand"><img class="logo" src="logo.png" alt="Voca Duo+ logo"/> Voca Duo+</div>
+  <div class="toolbar">
+    <button class="icon-btn" id="soundBtn" title="사운드 토글">🔊</button>
+    <button class="icon-btn" id="darkBtn" title="다크 모드">🌙</button>
+  </div>
+</div>
+
+<div id="loader" class="center" style="height:60vh">
+  <div class="spinner" aria-label="Loading"></div>
+</div>
+
+<div id="app" class="container hidden">
+  <!-- Home View (only two big buttons) -->
+  <section id="homeView" class="view active">
+    <div class="grid2">
+      <button class="card cta" id="goStudy"><span>📘</span><span>단어 암기 (Study)</span><span class="badge">30단계</span></button>
+      <button class="card cta" id="goQuiz"><span>📝</span><span>퀴즈 (Quiz)</span><span class="badge">30단계</span></button>
+    </div>
+    <div class="small" id="dataInfo"></div>
+  </section>
+
+  <!-- Stage Select for Study -->
+  <section id="studySelectView" class="view">
+    <div class="topbar">
+      <button class="back" id="backHomeA">← 홈</button>
+      <div class="small">학습할 단계를 선택하세요</div>
+    </div>
+    <div class="card">
+      <div class="stage-grid" id="studyStageGrid"></div>
+    </div>
+  </section>
+
+  <!-- Stage Select for Quiz -->
+  <section id="quizSelectView" class="view">
+    <div class="topbar">
+      <button class="back" id="backHomeB">← 홈</button>
+      <div class="small">퀴즈할 단계를 선택하세요</div>
+    </div>
+    <div class="card">
+      <div class="stage-grid" id="quizStageGrid"></div>
+    </div>
+  </section>
+
+  <!-- Study View -->
+  <section id="studyView" class="view">
+    <div class="topbar">
+      <button class="back" id="backStudySelect">← 단계 선택</button>
+      <div class="small" id="studyHead">단계 - / 30 · 진행 -/150</div>
+      <div class="timer-wrap">
+        <div class="time-row"><span>남은시간</span><strong id="studyTime">30:00</strong></div>
+        <div class="timebar"><span id="studyTimeBar"></span></div>
+      </div>
+    </div>
+    <div class="study-card" id="studyCard">
+      <div class="word" id="sWord">—</div>
+      <div class="meta">
+        <div id="sKpron"> </div>
+        <div id="sIpa" style="text-align:right"> </div>
+      </div>
+      <div class="example" id="sExample">예문이 여기에 표시됩니다.</div>
+      <div class="meaning hidden" id="sMeaning"><strong>뜻</strong> — </div>
+      <div class="ctrl-row">
+        <button class="btn" id="prevBtn">← 이전</button>
+        <button class="btn primary" id="nextBtn">다음 →</button>
+      </div>
+      <div class="controls">
+        <label class="toggle"><input type="checkbox" id="showMeaning" class="switch"/><span>뜻 보기</span></label>
+        <label class="toggle"><input type="checkbox" id="shuffleToggle" class="switch"/><span>셔플</span></label>
+        <label class="toggle"><input type="checkbox" id="autoToggle" class="switch"/><span>자동 넘김</span></label>
+        <label class="toggle"><span>간격</span>
+          <select id="autoInterval" style="border-radius:8px;border:1px solid var(--br);padding:6px 8px">
+            <option value="2">2초</option><option value="3" selected>3초</option><option value="4">4초</option><option value="5">5초</option>
+          </select>
+        </label>
+        <label class="toggle"><input type="checkbox" id="masterToggle" class="switch"/><span>⭐ 마스터</span></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quiz View -->
+  <section id="quizView" class="view">
+    <div class="topbar">
+      <button class="back" id="backQuizSelect">← 단계 선택</button>
+      <div class="small" id="quizHead">단계 - / 진행 -/150</div>
+      <div class="timer-wrap">
+        <div class="time-row"><span>남은시간</span><strong id="quizTime">30:00</strong></div>
+        <div class="timebar"><span id="quizTimeBar"></span></div>
+      </div>
+    </div>
+    <div class="quiz-card answer-anim" id="quizCard">
+      <div class="quiz-q">뜻을 보고 영단어를 입력하세요</div>
+      <div class="example" id="qMeaning">—</div>
+      <div class="input-row">
+        <input id="qInput" type="text" placeholder="정답 입력"/>
+        <button class="btn primary" id="qSubmit">제출</button>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-outline" id="qHintBtn">힌트 (예문)</button>
+        <div class="badge" id="qProgress">1 / 150</div>
+      </div>
+      <div class="hint" id="qHint">예문</div>
+    </div>
+    <div class="card hidden" id="quizResult">
+      <h3 style="margin:0 0 8px">결과</h3>
+      <div id="quizSummary" class="small">—</div>
+      <div class="toolbar" style="margin:10px 0">
+        <button class="btn" id="retryWrong">틀린 단어만 다시</button>
+        <button class="btn" id="masterWrong">틀린 단어 마스터 처리</button>
+        <button class="btn btn-outline" id="downloadWrong">틀린 단어 TSV 다운로드</button>
+      </div>
+      <ul class="res-list" id="wrongList"></ul>
+    </div>
+  </section>
+  <footer></footer>
+</div>
+
+<div id="toast" class="toast snack hidden"></div>
+
+<!-- SheetJS CDN (fallback handled in JS) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+(() => {
+  // ====== Config ======
+  const WORDS_XLSX_URL = "./word_list.xlsx"; // absolute URL on same origin is OK too
+  const FETCH_TIMEOUT_MS = 6000;
+
+  // ====== App State ======
+  const App = { data: [], demo:false, currentStage:1 };
+  // Services
+  const Storage = {
+    get(k, def=null){ try{ const v = localStorage.getItem(k); return v? JSON.parse(v): def; }catch(e){ return def; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+    merge(k, obj){ const cur = this.get(k, {}); this.set(k, Object.assign({}, cur, obj)); },
+    keyStageStudy(n){ return \`voca.stage.\${n}.study\`; },
+    keyStageQuiz(n){ return \`voca.stage.\${n}.quiz\`; },
+  };
+  const settingsKey='voca.settings';
+  const Settings = () => Object.assign({sound:true,dark:false,shuffle:false,autoAdvance:false,autoInterval:3}, Storage.get(settingsKey, {}));
+
+  // Toast
+  const Toast = (m,ms=2200)=>{const el=document.getElementById('toast'); el.textContent=m; el.classList.remove('hidden'); clearTimeout(Toast._t); Toast._t=setTimeout(()=>el.classList.add('hidden'),ms)};
+
+  // Audio
+  const AudioFX={ctx:null,ensure(){const s=Settings(); if(!s.sound)return null; if(!this.ctx){try{this.ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}return this.ctx;},
+    beep(t='ok',d=.12){const c=this.ensure(); if(!c)return; const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=(t==='ok'?880:220);
+      g.gain.setValueAtTime(.12,c.currentTime);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+d);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+d);}}
+
+  // Data loader
+  const DataLoader={async load(){
+      await new Promise(res=>setTimeout(res,80));
+      if(typeof XLSX==='undefined') throw new Error('SheetJS CDN 로드 실패');
+      const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort('timeout'),FETCH_TIMEOUT_MS);
+      let resp; try{ resp=await fetch(WORDS_XLSX_URL,{mode:'cors',signal:ctrl.signal}); } finally{ clearTimeout(t); }
+      if(!resp||!resp.ok) throw new Error('엑셀 파일을 불러오지 못했습니다.');
+      const ab=await resp.arrayBuffer(); const wb=XLSX.read(ab,{type:'array'}); const sheet=wb.Sheets[wb.SheetNames[0]];
+      let rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});
+      const hdr=rows[0]||[]; const hs=new Set(hdr.map(v=>String(v).trim().toLowerCase())); const looks=hs.has('word')||hs.has('meaning_ko')||hs.has('ipa');
+      if(looks) rows=rows.slice(1);
+      const out=[]; for(const r of rows){ const word=(r[0]||"").toString().trim(); if(!word) continue;
+        out.push({word,meaning_ko:(r[1]||"").toString().trim(),korean_pron:(r[2]||"").toString().trim(),ipa:(r[3]||"").toString().trim(),example:(r[4]||"").toString().trim()}); }
+      if(out.length<1) throw new Error('엑셀 파싱 결과가 비어 있습니다.');
+      return out;
+    },
+    demo(){ App.demo=true; return [
+      {word:'abandon', meaning_ko:'버리다, 포기하다', korean_pron:'어밴던', ipa:'əˈbændən', example:'He had to abandon the plan.'},
+      {word:'ability', meaning_ko:'능력', korean_pron:'어빌리티', ipa:'əˈbɪləti', example:'She has the ability to lead.'},
+      {word:'ban', meaning_ko:'금지하다', korean_pron:'밴', ipa:'bæn', example:'They plan to ban smoking here.'},
+      {word:'capture', meaning_ko:'포획하다, 붙잡다', korean_pron:'캡처', ipa:'ˈkæptʃər', example:'The photo captures the moment.'},
+      {word:'demand', meaning_ko:'요구하다', korean_pron:'디맨드', ipa:'dɪˈmænd', example:'They demand better pay.'},
+      {word:'eager', meaning_ko:'열망하는', korean_pron:'이거', ipa:'ˈiːɡər', example:'He is eager to learn.'},
+      {word:'fabric', meaning_ko:'직물, 구조', korean_pron:'패브릭', ipa:'ˈfæbrɪk', example:'This fabric is soft.'},
+      {word:'genuine', meaning_ko:'진짜의', korean_pron:'제뉴인', ipa:'ˈdʒenjuɪn', example:'Is this leather genuine?'},
+      {word:'habit', meaning_ko:'습관', korean_pron:'해빗', ipa:'ˈhæbɪt', example:'He has a habit of reading.'},
+      {word:'ideal', meaning_ko:'이상적인', korean_pron:'아이디얼', ipa:'aɪˈdiːəl', example:'It was an ideal place to rest.'},
+    ]; }
+  };
+
+  // Staging/Slicing
+  const StageService={ per:150, stages:30, sliceFor(stage){
+      const start=(stage-1)*this.per, end=start+this.per;
+      return App.data.slice(start,end);
+    }};
+
+  // Shortcuts
+  const el=id=>document.getElementById(id);
+  const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+  const fmtTime=s=>{const m=Math.floor(s/60),ss=s%60;return \`\${m.toString().padStart(2,'0')}:\${ss.toString().padStart(2,'0')}\`;
+  const maskWordInText=(text,word)=>{ if(!text) return ''; const esc=word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); const re=new RegExp(esc,'gi'); return text.replace(re,m=>'█'.repeat(Math.max(4,m.length))); };
+  const normalize=s=>s.toLowerCase().replace(/[^a-z]/g,'');
+
+  // Refs
+  const homeView=el('homeView'), studySelectView=el('studySelectView'), quizSelectView=el('quizSelectView'), studyView=el('studyView'), quizView=el('quizView');
+  const loader=el('loader'), appRoot=el('app'), dataInfo=el('dataInfo');
+  const soundBtn=el('soundBtn'), darkBtn=el('darkBtn');
+
+  // Build fixed 30-stage grids with ranges (01, 151, …)
+  function buildStageGrid(targetEl, onClick){
+    targetEl.innerHTML='';
+    for(let i=1;i<=StageService.stages;i++){
+      const start=(i-1)*StageService.per+1, end=i*StageService.per;
+      const btn=document.createElement('button');
+      btn.className='stage';
+      btn.innerHTML=\`<h4>\${String(i).padStart(2,'0')}</h4><div class="small">\${start}–\${end}</div>\`;
+      btn.addEventListener('click',()=> onClick(i));
+      targetEl.appendChild(btn);
+    }
+  }
+
+  // ====== Study state ======
+  let sIndex=0, sOrder=[], sTimer=null, sRemain=1800, sAutoId=null;
+  const studyHead=el('studyHead'), studyTime=el('studyTime'), studyTimeBar=el('studyTimeBar');
+  const sWord=el('sWord'), sKpron=el('sKpron'), sIpa=el('sIpa'), sExample=el('sExample'), sMeaning=el('sMeaning');
+  const prevBtn=el('prevBtn'), nextBtn=el('nextBtn');
+  const showMeaning=el('showMeaning'), shuffleToggle=el('shuffleToggle'), autoToggle=el('autoToggle'), autoInterval=el('autoInterval'), masterToggle=el('masterToggle');
+
+  function startStudy(stage){
+    App.currentStage=stage;
+    const list=StageService.sliceFor(stage);
+    if(list.length===0){ Toast('이 단계에 단어가 없습니다.'); return; }
+    const st=Settings();
+    const sKey=Storage.keyStageStudy(stage);
+    const sState=Storage.get(sKey,{index:0,mastered:{}});
+    sOrder=[...Array(list.length).keys()];
+    if(st.shuffle) sOrder.sort(()=>Math.random()-0.5);
+    sIndex=clamp(sState.index||0,0,list.length-1);
+    shuffleToggle.checked=st.shuffle; autoToggle.checked=st.autoAdvance; autoInterval.value=String(st.autoInterval||3); showMeaning.checked=false;
+    masterToggle.checked=!!sState.mastered[list[sOrder[sIndex]]?.word];
+    resetTimer('study');
+    switchView(studyView);
+    renderStudy();
+  }
+  function renderStudy(){
+    const stage=App.currentStage, list=StageService.sliceFor(stage); const idx=sOrder[sIndex]; const item=list[idx];
+    studyHead.textContent=\`단계 \${stage} / 30 · 진행 \${sIndex+1}/\${list.length}\`;
+    sWord.textContent=item.word||'—'; sKpron.textContent=item.korean_pron||''; sIpa.textContent=item.ipa||'';
+    sExample.textContent=item.example||'예문 없음'; sMeaning.innerHTML='<strong>뜻</strong> — '+(item.meaning_ko||'—');
+    sMeaning.classList.toggle('hidden', !showMeaning.checked);
+    const sState=Storage.get(Storage.keyStageStudy(stage),{index:0,mastered:{}}); masterToggle.checked=!!sState.mastered[item.word];
+    Storage.merge(Storage.keyStageStudy(stage),{index:sIndex});
+    if(sAutoId){clearInterval(sAutoId); sAutoId=null} const st=Settings(); if(autoToggle.checked){ sAutoId=setInterval(()=>nextStudy(1),(Number(autoInterval.value)||st.autoInterval||3)*1000); }
+  }
+  function nextStudy(dir){ const list=StageService.sliceFor(App.currentStage); sIndex=(sIndex+dir+list.length)%list.length; renderStudy(); }
+  prevBtn.addEventListener('click',()=>nextStudy(-1)); nextBtn.addEventListener('click',()=>nextStudy(1));
+  showMeaning.addEventListener('change',()=>renderStudy());
+  shuffleToggle.addEventListener('change',()=>{ Storage.merge(settingsKey,{shuffle:shuffleToggle.checked}); startStudy(App.currentStage); });
+  autoToggle.addEventListener('change',()=>{ Storage.merge(settingsKey,{autoAdvance:autoToggle.checked}); renderStudy(); });
+  autoInterval.addEventListener('change',()=>{ Storage.merge(settingsKey,{autoInterval:Number(autoInterval.value)||3}); renderStudy(); });
+  masterToggle.addEventListener('change',()=>{
+    const stage=App.currentStage, list=StageService.sliceFor(stage), item=list[sOrder[sIndex]];
+    const k=Storage.keyStageStudy(stage); const st=Storage.get(k,{index:0,mastered:{}});
+    if(masterToggle.checked) st.mastered[item.word]=true; else delete st.mastered[item.word];
+    Storage.set(k,st);
+  });
+
+  // ====== Quiz state ======
+  let qIndex=0, qOrder=[], qWrong=[], qTimer=null, qRemain=1800, quizActiveList=[];
+  const quizHead=el('quizHead'), quizTime=el('quizTime'), quizTimeBar=el('quizTimeBar');
+  const qMeaning=el('qMeaning'), qHint=el('qHint'), qHintBtn=el('qHintBtn'), qInput=el('qInput'), qSubmit=el('qSubmit'), qProgress=el('qProgress');
+  const quizCard=el('quizCard'), quizResult=el('quizResult'), wrongList=el('wrongList'), quizSummary=el('quizSummary');
+
+  function startQuiz(stage, onlyWrong=false){
+    App.currentStage=stage;
+    const full=StageService.sliceFor(stage);
+    quizActiveList = onlyWrong ? (Storage.get(Storage.keyStageQuiz(stage),{wrongWords:[]}).wrongWords||[]) : full;
+    if(quizActiveList.length===0){ Toast('퀴즈에 사용할 단어가 없습니다.'); return; }
+    qOrder=[...Array(quizActiveList.length).keys()]; qIndex=0; qWrong=[];
+    resetTimer('quiz'); quizResult.classList.add('hidden'); quizCard.classList.remove('hidden');
+    switchView(quizView);
+    renderQuestion();
+  }
+  function renderQuestion(){
+    const item=quizActiveList[qOrder[qIndex]];
+    quizHead.textContent=\`단계 \${App.currentStage} / 진행 \${qIndex+1}/\${quizActiveList.length}\`;
+    qMeaning.textContent=item.meaning_ko || '뜻 정보 없음';
+    qHint.style.display='none';
+    qHint.innerHTML=maskWordInText(item.example||'예문 없음', item.word||'');
+    qProgress.textContent=\`\${qIndex+1} / \${quizActiveList.length}\`;
+    qInput.value=''; qInput.focus();
+  }
+  function submitAnswer(){
+    const item=quizActiveList[qOrder[qIndex]]; const user=normalize(qInput.value||''); const ans=normalize(item.word||'');
+    const ok=(user===ans)||(user&&ans&&(ans.endsWith('s')&&user===ans.slice(0,-1)));
+    quizCard.classList.remove('ok','bad'); void quizCard.offsetWidth;
+    if(ok){ quizCard.classList.add('ok','answer-anim'); AudioFX.beep('ok'); }
+    else { quizCard.classList.add('bad','answer-anim'); AudioFX.beep('bad'); }
+    if(!ok){ const orig=qMeaning.textContent; qMeaning.innerHTML=\`<span style="color:var(--bad)">정답: <strong>\${item.word}</strong></span> · \${orig}\`; qWrong.push(item); setTimeout(nextQuestion,900); }
+    else { setTimeout(nextQuestion,250); }
+  }
+  function nextQuestion(){ qIndex++; if(qIndex>=quizActiveList.length){ finishQuiz(); return; } renderQuestion(); }
+  function finishQuiz(){
+    if(qTimer){clearInterval(qTimer); qTimer=null;}
+    const total=quizActiveList.length, wrong=qWrong.length, correct=total-wrong, rate=Math.round(correct/total*100);
+    quizSummary.textContent=\`정답률 \${rate}% · 소요시간 \${fmtTime(1800-qRemain)}\`;
+    Storage.set(Storage.keyStageQuiz(App.currentStage), {score:rate, wrongWords:qWrong.map(w=>({word:w.word,meaning_ko:w.meaning_ko,example:w.example||''}))});
+    wrongList.innerHTML='';
+    if(wrong===0){ const li=document.createElement('li'); li.className='res-item'; li.textContent='전부 정답입니다! 멋져요 🥳'; wrongList.appendChild(li); }
+    else { for(const w of qWrong){ const li=document.createElement('li'); li.className='res-item'; li.innerHTML=\`<strong>\${w.word}</strong> — \${w.meaning_ko} <div class="small">\${w.example||''}</div>\`; wrongList.appendChild(li); } }
+    quizCard.classList.add('hidden'); quizResult.classList.remove('hidden');
+  }
+  qSubmit.addEventListener('click', submitAnswer);
+  qInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ submitAnswer(); } else if(e.key==='Escape'){ qHintBtn.click(); } });
+  qHintBtn.addEventListener('click', ()=>{ qHint.style.display=(qHint.style.display==='none'||!qHint.style.display)?'block':'none'; });
+  el('retryWrong').addEventListener('click', ()=> startQuiz(App.currentStage, true));
+  el('masterWrong').addEventListener('click', ()=>{
+    const stage=App.currentStage; const k=Storage.keyStageStudy(stage); const st=Storage.get(k,{index:0,mastered:{}});
+    for(const w of qWrong) st.mastered[w.word]=true; Storage.set(k, st); Toast('틀린 단어를 마스터 처리했습니다.');
+  });
+  el('downloadWrong').addEventListener('click', ()=>{
+    const qState=Storage.get(Storage.keyStageQuiz(App.currentStage), {wrongWords:[]});
+    const rows=[['word','meaning_ko','example'], ...qState.wrongWords.map(w=>[w.word,w.meaning_ko,(w.example||'').replace(/\t/g,' ')])];
+    const tsv=rows.map(r=>r.join('\t')).join('\n');
+    const blob=new Blob([tsv], {type:'text/tab-separated-values;charset=utf-8'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=\`wrong_stage\${App.currentStage}.tsv\`; a.click(); URL.revokeObjectURL(a.href);
+  });
+
+  // Timers
+  function resetTimer(which){
+    if(which==='study'){
+      if(sTimer){clearInterval(sTimer);} sRemain=1800; studyTime.textContent=fmtTime(sRemain); studyTimeBar.style.width='100%';
+      sTimer=setInterval(()=>{ sRemain--; if(sRemain<0){clearInterval(sTimer);sTimer=null; sessionEnd('study'); return;} studyTime.textContent=fmtTime(sRemain); studyTimeBar.style.width=\`\${sRemain/1800*100}%\`; },1000);
+    } else {
+      if(qTimer){clearInterval(qTimer);} qRemain=1800; quizTime.textContent=fmtTime(qRemain); quizTimeBar.style.width='100%';
+      qTimer=setInterval(()=>{ qRemain--; if(qRemain<0){clearInterval(qTimer);qTimer=null; sessionEnd('quiz'); return;} quizTime.textContent=fmtTime(qRemain); quizTimeBar.style.width=\`\${qRemain/1800*100}%\`; },1000);
+    }
+  }
+  function sessionEnd(which){
+    try{ navigator.vibrate && navigator.vibrate(200);}catch(e){} AudioFX.beep('bad', .25);
+    if(which==='study'){
+      if(sAutoId){clearInterval(sAutoId); sAutoId=null;}
+      if(confirm('학습 세션이 종료되었습니다. 계속 보시겠어요? 확인=계속 / 취소=단계 선택')){ resetTimer('study'); }
+      else switchView(studySelectView);
+    }else{
+      if(confirm('퀴즈 시간이 종료되었습니다. 결과를 확인할까요? 확인=결과 / 취소=단계 선택')){ finishQuiz(); }
+      else switchView(quizSelectView);
+    }
+  }
+
+  function switchView(v){ for(const n of document.querySelectorAll('.view')) n.classList.remove('active'); v.classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
+
+  // Top buttons and toggles
+  el('goStudy').addEventListener('click', ()=> switchView(studySelectView));
+  el('goQuiz').addEventListener('click', ()=> switchView(quizSelectView));
+  el('backHomeA').addEventListener('click', ()=> switchView(homeView));
+  el('backHomeB').addEventListener('click', ()=> switchView(homeView));
+  el('backStudySelect').addEventListener('click', ()=> switchView(studySelectView));
+  el('backQuizSelect').addEventListener('click', ()=> switchView(quizSelectView));
+
+  // Sound/Dark
+  function applySettings(){
+    const st=Settings();
+    soundBtn.textContent=st.sound? '🔊':'🔈';
+    document.documentElement.classList.toggle('dark', !!st.dark);
+  }
+  el('soundBtn').addEventListener('click', ()=>{ const st=Settings(); Storage.merge(settingsKey,{sound:!st.sound}); applySettings(); });
+  el('darkBtn').addEventListener('click', ()=>{ const st=Settings(); Storage.merge(settingsKey,{dark:!st.dark}); applySettings(); });
+
+  // Keyboard helpers
+  window.addEventListener('keydown', (e)=>{
+    if(document.activeElement === el('qInput')) return;
+    if(e.key==='ArrowRight' && studyView.classList.contains('active')) nextStudy(1);
+    if(e.key==='ArrowLeft'  && studyView.classList.contains('active')) nextStudy(-1);
+  });
+
+  // Init
+  async function init(){
+    applySettings();
+    try{
+      App.data = await DataLoader.load();
+      App.demo = false;
+    }catch(e){
+      console.warn(e);
+      App.data = DataLoader.demo();
+      Toast('엑셀 로드 실패 — 데모 모드로 실행합니다.');
+    } finally {
+      // Build stage selectors (always 30 tiles; slicing is 150 each from top)
+      buildStageGrid(el('studyStageGrid'), (i)=> startStudy(i));
+      buildStageGrid(el('quizStageGrid'),  (i)=> startQuiz(i));
+      loader.classList.add('hidden'); appRoot.classList.remove('hidden');
+      dataInfo.textContent = App.demo? '데모 모드 (샘플 10개 로딩됨)' : \`데이터 로딩 완료 — 총 \${App.data.length}개\`;
+    }
+  }
+  init();
+})();
+</script>
+</body>
+</html>
