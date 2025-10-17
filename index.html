@@ -55,7 +55,7 @@ body{
   font-weight:800;font-size:22px;min-height:110px;cursor:pointer;
 }
 
-/* Stage Grid (centered) */
+/* Stage Grid (centered vertically & horizontally) */
 .stage-wrap{
   max-width:520px;margin:0 auto;text-align:center;
   min-height:70vh; display:flex; flex-direction:column; justify-content:center; align-items:center;
@@ -67,6 +67,10 @@ body{
   display:flex;align-items:center;justify-content:center;
   font-size:15px;cursor:pointer;min-height:56px;width:100%;
 }
+/* US/UK flag row */
+.flag-row{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:14px}
+.flag{border:1px solid var(--br);background:#fff;box-shadow:var(--shadow);padding:8px 12px;border-radius:12px;cursor:pointer}
+.flag.active{outline:3px solid var(--primary)}
 
 /* Timer + progress */
 .timer-area{margin:6px 0 10px}
@@ -74,13 +78,16 @@ body{
 .timebar-wrap{height:10px;background:#E3EDFF;border:1px solid var(--br-info);border-radius:999px;overflow:hidden;margin-top:6px}
 .timebar{height:10px;background:linear-gradient(90deg,var(--info),#80b7ff);width:100%}
 
-/* Inline feedback under timer */
+/* Feedback (no layout shift) */
+.feedback-slot{height:40px;display:flex;align-items:center;justify-content:center;margin-top:8px}
 .feedback{
-  display:none;margin:8px auto 0;max-width:520px;text-align:center;
+  visibility:hidden; opacity:0; transition:opacity .18s ease;
+  max-width:520px; text-align:center;
   padding:8px 12px;border-radius:12px;box-shadow:var(--shadow);font-weight:800;font-size:14px
 }
 .feedback.ok{background:#eaf8e0;color:#2d7d00;border:1px solid #cdecbc}
 .feedback.bad{background:#ffe7ea;color:#b33444;border:1px solid #ffc8d0}
+.feedback.show{visibility:visible;opacity:1}
 
 /* Study */
 .study-card{
@@ -157,6 +164,10 @@ body{
     <div class="stage-wrap">
       <h3>Choose a Stage</h3>
       <div class="stage-grid" id="studyStageGrid"></div>
+      <div class="flag-row">
+        <button class="flag" id="flagUS">🇺🇸 US</button>
+        <button class="flag" id="flagUK">🇬🇧 UK</button>
+      </div>
     </div>
   </section>
   <section id="quizSelectView" class="view">
@@ -171,7 +182,7 @@ body{
     <div class="timer-area">
       <div class="timer" id="studyTimer">남은 시간: 30:00</div>
       <div class="timebar-wrap"><div id="studyBar" class="timebar"></div></div>
-      <div id="studyFeedback" class="feedback"></div>
+      <div class="feedback-slot"><div id="studyFeedback" class="feedback"></div></div>
     </div>
     <div class="study-card">
       <div class="word-index" id="wordIndex">1/150</div>
@@ -188,7 +199,7 @@ body{
     <div class="timer-area">
       <div class="timer" id="quizTimer">남은 시간: 30:00</div>
       <div class="timebar-wrap"><div id="quizBar" class="timebar"></div></div>
-      <div id="quizFeedback" class="feedback"></div>
+      <div class="feedback-slot"><div id="quizFeedback" class="feedback"></div></div>
     </div>
     <div class="quiz-wrap">
       <div class="quiz-card">
@@ -217,12 +228,25 @@ body{
 /* ===== Utilities ===== */
 const el=id=>document.getElementById(id);
 const fmt=s=>{const m=Math.floor(s/60),ss=s%60;return m.toString().padStart(2,'0')+":"+ss.toString().padStart(2,'0');}
+
 function feedback(node, ok, msg){
   node.textContent = msg || (ok?'정답!':'오답');
-  node.className = 'feedback ' + (ok?'ok':'bad');
-  node.style.display='block';
+  node.classList.remove('ok','bad','show');
+  node.classList.add(ok?'ok':'bad','show');
   clearTimeout(node._t);
-  node._t=setTimeout(()=>node.style.display='none',1200);
+  node._t=setTimeout(()=>node.classList.remove('show'),1300);
+}
+
+/* ===== Settings (US/UK voice) ===== */
+const SETTINGS_KEY='voca.settings';
+const Settings={
+  get(){ try{ return JSON.parse(localStorage.getItem(SETTINGS_KEY))||{ttsLang:'en-US'} }catch(e){ return {ttsLang:'en-US'} } },
+  set(v){ try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(v)); }catch(e){} }
+};
+let settings=Settings.get();
+function updateFlagUI(){
+  el('flagUS').classList.toggle('active', settings.ttsLang==='en-US');
+  el('flagUK').classList.toggle('active', settings.ttsLang==='en-GB');
 }
 
 /* ===== Robust TTS ===== */
@@ -239,12 +263,14 @@ function unlockTTS(){
     ttsUnlocked=true; return true;
   }catch(e){ return false; }
 }
-function speak(text, lang='en-US'){
+function speak(text, lang){
   if(!text || !('speechSynthesis' in window)) return;
   if(!ttsUnlocked) unlockTTS();
   const u=new SpeechSynthesisUtterance(text);
-  u.lang=lang; u.rate=0.95; u.pitch=1.0;
-  const v = voices.find(v=>new RegExp('^'+lang,'i').test(v.lang)) || voices.find(v=>/^en/i.test(v.lang));
+  const targetLang = lang || (settings.ttsLang || 'en-US');
+  u.lang=targetLang; u.rate=0.95; u.pitch=1.0;
+  const v = voices.find(v=>new RegExp('^'+targetLang,'i').test(v.lang))
+           || voices.find(v=>/^en/i.test(v.lang));
   if(v) u.voice=v;
   try{
     window.speechSynthesis.cancel();
@@ -340,13 +366,13 @@ function renderStudy(){
   el('sExample').textContent=w.ex||'';
   requestAnimationFrame(fitWord);
 }
-el('sWord').addEventListener('click', ()=> speak(el('sWord').textContent,'en-US'));
-el('sExample').addEventListener('click', ()=> speak(el('sExample').textContent,'en-US')); // 예문도 읽기
-el('playTts').addEventListener('click', ()=> speak(el('sWord').textContent,'en-US'));
+el('sWord').addEventListener('click', ()=> speak(el('sWord').textContent));
+el('sExample').addEventListener('click', ()=> speak(el('sExample').textContent)); // 예문도 읽기
+el('playTts').addEventListener('click', ()=> speak(el('sWord').textContent));
 el('prevBtn').addEventListener('click', ()=>{ idx=Math.max(0,idx-1); renderStudy(); });
 el('nextBtn').addEventListener('click', ()=>{ idx++; renderStudy(); });
 
-/* ===== Quiz (KO↔EN mix, comma partial) ===== */
+/* ===== Quiz (KO↔EN mix, comma partial + empty guard) ===== */
 let qMode='KO2EN'; // 'KO2EN' or 'EN2KO'
 let qItem=null;
 
@@ -378,18 +404,25 @@ function renderQuiz(){
 
 el('qSubmit').addEventListener('click', ()=>{
   if(!qItem) return;
-  const userRaw = (el('qInput').value||'').trim();
+  const raw = (el('qInput').value||'').trim();
   let ok=false, answerText='';
 
   if(qMode==='KO2EN'){
-    ok = userRaw.toLowerCase().replace(/[^a-z]/g,'') === (qItem.word||'').toLowerCase().replace(/[^a-z]/g,'');
+    const user = raw.toLowerCase().replace(/[^a-z]/g,'');
+    const ans  = (qItem.word||'').toLowerCase().replace(/[^a-z]/g,'');
+    ok = user.length>0 && user===ans;         // ← 빈 입력 방지
     answerText = qItem.word || '';
   }else{ // EN2KO
-    const user = userRaw.replace(/\s+/g,'');
-    const answers = normalizeKoPieces(qItem.meaning);
-    ok = answers.some(a=>a && (a===user || a.includes(user) || user.includes(a)));
+    const user = raw.replace(/\s+/g,'');      // 한글 공백 제거
+    if(user.length>0){                         // ← 빈 입력 방지
+      const answers = normalizeKoPieces(qItem.meaning);
+      ok = answers.some(a=>a && (a===user || a.includes(user) || user.includes(a)));
+    } else {
+      ok = false;
+    }
     answerText = qItem.meaning || '';
   }
+
   if(ok) feedback(el('quizFeedback'), true, '정답!');
   else   feedback(el('quizFeedback'), false, '정답: ' + answerText);
 
@@ -403,6 +436,14 @@ el('goStudy').addEventListener('click', ()=>{ switchView(el('studySelectView'));
 el('goQuiz').addEventListener('click',  ()=>{ switchView(el('quizSelectView')); });
 el('titleBtn').addEventListener('click', ()=>{ switchView(el('homeView')); el('bottomBar').classList.add('hidden'); });
 
+/* ===== Flag handlers ===== */
+el('flagUS').addEventListener('click', ()=>{
+  settings.ttsLang='en-US'; Settings.set(settings); updateFlagUI();
+});
+el('flagUK').addEventListener('click', ()=>{
+  settings.ttsLang='en-GB'; Settings.set(settings); updateFlagUI();
+});
+
 /* ===== Init ===== */
 (async()=>{
   if('speechSynthesis' in window){
@@ -411,6 +452,7 @@ el('titleBtn').addEventListener('click', ()=>{ switchView(el('homeView')); el('b
       window.addEventListener(ev, ()=>{ if(!ttsUnlocked) unlockTTS(); }, {once:true,capture:true});
     });
   }
+  updateFlagUI();
   try{
     data = await loadExcel();
   }finally{
