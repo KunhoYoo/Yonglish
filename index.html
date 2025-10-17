@@ -19,6 +19,7 @@
 :root{
   --primary:#58CC02; --accent:#FFD166;
   --text:#233042; --bg:#F7FAF7; --white:#fff;
+  --info:#3A86FF;
   --shadow:0 6px 18px rgba(0,0,0,.08);
   --br:#E6EFE5; --br-info:#CFE0FF;
 }
@@ -59,7 +60,7 @@ body{
   font-weight:700;font-size:18px;min-height:100px;cursor:pointer;
 }
 
-/* ===== Stage Grid (centered, smaller tiles) ===== */
+/* ===== Stage Grid (centered) ===== */
 .stage-wrap{max-width:520px;margin:0 auto;text-align:center}
 .stage-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;justify-items:center}
 .stage{
@@ -69,26 +70,42 @@ body{
   font-size:14px;cursor:pointer;min-height:56px;width:100%;
 }
 
+/* ===== Timers ===== */
+.timer-area{margin:6px 0 10px}
+.timer{text-align:center;font-weight:800;font-size:15px}
+.timebar-wrap{height:10px;background:#E3EDFF;border:1px solid var(--br-info);border-radius:999px;overflow:hidden;margin-top:6px}
+.timebar{height:10px;background:linear-gradient(90deg,var(--info),#80b7ff);width:100%}
+
+/* ===== Inline feedback (under timer) ===== */
+.feedback{
+  display:none;margin:8px auto 0;max-width:520px;text-align:center;
+  padding:8px 12px;border-radius:12px;box-shadow:var(--shadow);font-weight:800;font-size:14px
+}
+.feedback.ok{background:#eaf8e0;color:#2d7d00;border:1px solid #cdecbc}
+.feedback.bad{background:#ffe7ea;color:#b33444;border:1px solid #ffc8d0}
+
 /* ===== Study ===== */
-.timer{text-align:center;font-weight:800;margin:8px 0;font-size:15px}
 .study-card{
   background:#fff;border-radius:16px;padding:22px;border:1px solid var(--br);
   box-shadow:var(--shadow);text-align:center;min-height:360px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px
 }
 .word-index{font-size:13px;opacity:.7;margin-bottom:2px}
+.word-wrap{width:100%;display:flex;align-items:center;justify-content:center;min-height:80px}
 .word{
-  font-size:68px;font-weight:900;cursor:pointer;line-height:1.05;
-  white-space:nowrap; /* auto-fit에서 한 줄 유지 */
+  font-weight:900;cursor:pointer;line-height:1.05;white-space:nowrap;max-width:100%;
+  font-size:68px; /* 시작값, 이후 JS로 자동 축소 */
 }
 .meta{display:flex;gap:10px;align-items:center;justify-content:center;color:#555;font-size:16px}
-.meaning{
-  background:#FFF8EC;border:1px dashed #FFD166;padding:12px;border-radius:12px;width:100%;font-size:16px
-}
+.meaning{background:#FFF8EC;border:1px dashed #FFD166;padding:12px;border-radius:12px;width:100%;font-size:16px}
 .example{
   background:#F6FBFF;border:1px dashed var(--br-info);padding:12px;border-radius:12px;width:100%;
   font-size:15px;line-height:1.6;min-height:78px; /* ≈ 3줄 */
   display:flex;align-items:center;justify-content:center;text-align:center;
+}
+.tts-btn{
+  border:none;background:#ffffff;padding:10px 14px;margin-top:8px;border-radius:12px;cursor:pointer;
+  box-shadow:var(--shadow);border:1px solid var(--br);font-weight:800
 }
 
 /* Bottom nav (Study only) */
@@ -104,7 +121,7 @@ body{
 .next-btn{background:var(--primary);color:#fff}
 
 /* ===== Quiz ===== */
-.quiz-wrap{display:flex;align-items:center;justify-content:center;min-height:62vh}
+.quiz-wrap{display:flex;align-items:center;justify-content:center;min-height:60vh}
 .quiz-card{
   background:#fff;border-radius:16px;border:1px solid var(--br);box-shadow:var(--shadow);
   padding:22px;max-width:520px;width:100%;text-align:center
@@ -117,12 +134,6 @@ body{
 .btn-submit{background:#58CC02;color:#fff}
 .btn-hint{background:#FFD166;color:#222}
 .hint{background:#FFF8EC;border:1px dashed #FFD166;padding:10px;border-radius:10px;margin-top:10px;font-size:14px;display:none}
-
-/* ===== Toast (top) ===== */
-.toast{
-  position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100;
-  background:#233042;color:#fff;padding:10px 16px;border-radius:12px;box-shadow:var(--shadow);font-size:14px;display:none
-}
 </style>
 </head>
 <body>
@@ -159,19 +170,28 @@ body{
 
   <!-- Study -->
   <section id="studyView" class="view">
-    <div class="timer" id="studyTimer">남은 시간: 30:00</div>
+    <div class="timer-area">
+      <div class="timer" id="studyTimer">남은 시간: 30:00</div>
+      <div class="timebar-wrap"><div id="studyBar" class="timebar"></div></div>
+      <div id="studyFeedback" class="feedback"></div>
+    </div>
     <div class="study-card">
       <div class="word-index" id="wordIndex">1/150</div>
-      <div class="word" id="sWord" title="Tap to hear">word</div>
+      <div class="word-wrap"><div class="word" id="sWord" title="탭하면 발음">word</div></div>
       <div class="meta"><span id="sPron"></span><span id="sIpa"></span></div>
       <div class="meaning" id="sMeaning"></div>
       <div class="example" id="sExample">—</div>
+      <button class="tts-btn" id="playTts">🔊 발음 듣기</button>
     </div>
   </section>
 
   <!-- Quiz -->
   <section id="quizView" class="view">
-    <div class="timer" id="quizTimer">남은 시간: 30:00</div>
+    <div class="timer-area">
+      <div class="timer" id="quizTimer">남은 시간: 30:00</div>
+      <div class="timebar-wrap"><div id="quizBar" class="timebar"></div></div>
+      <div id="quizFeedback" class="feedback"></div>
+    </div>
     <div class="quiz-wrap">
       <div class="quiz-card">
         <div class="quiz-progress" id="qProgress">1/150</div>
@@ -195,17 +215,21 @@ body{
   <button class="next-btn" id="nextBtn">다음 →</button>
 </div>
 
-<div id="toast" class="toast"></div>
-
 <!-- SheetJS -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 /* ===== Utilities ===== */
 const el=id=>document.getElementById(id);
-const showToast=msg=>{const t=el('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',1400);}
 const fmt=s=>{const m=Math.floor(s/60),ss=s%60;return m.toString().padStart(2,'0')+":"+ss.toString().padStart(2,'0');}
+function inlineFeedback(node, ok, msg){
+  node.textContent = msg || (ok?'정답!':'오답');
+  node.className = 'feedback ' + (ok?'ok':'bad');
+  node.style.display='block';
+  clearTimeout(node._t);
+  node._t=setTimeout(()=>node.style.display='none',1200);
+}
 
-/* Robust TTS: ensure voice list & select en-US when available */
+/* Robust TTS */
 let voices=[];
 function loadVoices(){ voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
 if('speechSynthesis' in window){
@@ -259,22 +283,25 @@ async function loadExcel(){
   }catch(e){
     // Demo fallback
     return [
+      {word:'enthusiastic',meaning:'열광적인, 열렬한',pron:'인쑤지애스틱',ipa:'/ɪnˌθjuːziˈæstɪk/',ex:'The audience was enthusiastic about the presentation.'},
       {word:'abandon',meaning:'버리다, 포기하다',pron:'어밴던',ipa:'əˈbændən',ex:'He had to abandon the plan.'},
-      {word:'ability',meaning:'능력',pron:'어빌리티',ipa:'əˈbɪləti',ex:'She has the ability to lead.'},
-      {word:'easily',meaning:'쉽게, 용이하게',pron:'이즐리',ipa:'ˈiːzɪli',ex:'The problem can be solved easily with this method.'}
+      {word:'ability',meaning:'능력',pron:'어빌리티',ipa:'əˈbɪləti',ex:'She has the ability to lead.'}
     ];
   }
 }
 
-/* ===== Timers ===== */
-function startTimer(labelId){
+/* ===== Timers with progress bars ===== */
+function startTimer(labelId, barId){
   if(timer) clearInterval(timer);
   remain=1800;
-  const t=el(labelId);
+  const t=el(labelId), bar=el(barId);
   t.textContent="남은 시간: "+fmt(remain);
+  bar.style.width='100%';
   timer=setInterval(()=>{
-    remain--; t.textContent="남은 시간: "+fmt(remain);
-    if(remain<=0){ clearInterval(timer); showToast('시간 종료'); }
+    remain--;
+    t.textContent="남은 시간: "+fmt(remain);
+    bar.style.width = (remain/1800*100)+'%';
+    if(remain<=0){ clearInterval(timer); }
   },1000);
 }
 
@@ -283,16 +310,17 @@ function startStudy(n){
   stage=n; idx=0;
   el('bottomBar').classList.remove('hidden');
   switchView(el('studyView'));
-  startTimer('studyTimer');
+  startTimer('studyTimer','studyBar');
   renderStudy();
 }
-function autoFitWord(){
-  const node=el('sWord');
-  let size=68, min=28;
-  node.style.fontSize=size+'px';
-  // 두 번 정도 시도: 가로/세로 둘 다 박스에 맞게
-  while((node.scrollWidth>node.clientWidth || node.scrollHeight>80) && size>min){
-    size-=2; node.style.fontSize=size+'px';
+function fitWord(){
+  const wrap = el('sWord');
+  let size = 68, min=28;
+  wrap.style.fontSize=size+'px';
+  const parent = wrap.parentElement; // .word-wrap
+  // 줄어들 때까지 반복(가로/세로 모두 체크)
+  while((wrap.scrollWidth > parent.clientWidth*0.92 || wrap.scrollHeight > 80) && size>min){
+    size -= 2; wrap.style.fontSize=size+'px';
   }
 }
 function renderStudy(){
@@ -304,9 +332,11 @@ function renderStudy(){
   el('sIpa').textContent=w.ipa||'';
   el('sMeaning').textContent=w.meaning||'';
   el('sExample').textContent=w.ex||'';
-  requestAnimationFrame(autoFitWord);
+  // fit after DOM paints
+  requestAnimationFrame(fitWord);
 }
 el('sWord').addEventListener('click', ()=> speak(el('sWord').textContent));
+el('playTts').addEventListener('click', ()=> speak(el('sWord').textContent));
 el('prevBtn').addEventListener('click', ()=>{ idx=Math.max(0,idx-1); renderStudy(); });
 el('nextBtn').addEventListener('click', ()=>{ idx++; renderStudy(); });
 
@@ -315,13 +345,13 @@ function startQuiz(n){
   stage=n; idx=0;
   el('bottomBar').classList.add('hidden');
   switchView(el('quizView'));
-  startTimer('quizTimer');
+  startTimer('quizTimer','quizBar');
   renderQuiz();
 }
 function normalizeKoPieces(s){return (s||'').split(',').map(x=>x.replace(/\s+/g,'')).filter(Boolean);}
 function renderQuiz(){
   const list=data.slice((stage-1)*PER, stage*PER);
-  const w=list[idx]; if(!w){ showToast('퀴즈 종료'); return;}
+  const w=list[idx]; if(!w){ inlineFeedback(el('quizFeedback'), true, '퀴즈 종료!'); return;}
   const type=Math.random()<0.5?0:1; // 0: KO→EN, 1: EN→KO
   el('qProgress').textContent=(idx+1)+"/"+list.length;
   el('qInput').value=''; el('qHint').style.display='none';
@@ -331,7 +361,7 @@ function renderQuiz(){
     el('qHint').textContent=w.ex || '예문 없음';
     el('qSubmit').onclick=()=>{
       const ok=(el('qInput').value||'').trim().toLowerCase() === (w.word||'').toLowerCase();
-      showToast(ok?'정답!':'오답: '+w.word);
+      inlineFeedback(el('quizFeedback'), ok, ok?'정답!':('오답: '+w.word));
       idx++; renderQuiz();
     };
   }else{
@@ -341,7 +371,7 @@ function renderQuiz(){
       const user=(el('qInput').value||'').replace(/\s+/g,'');
       const answers=normalizeKoPieces(w.meaning);
       const ok=answers.some(a=>a && (a===user || a.includes(user) || user.includes(a)));
-      showToast(ok?'정답!':'오답: '+(w.meaning||'-'));
+      inlineFeedback(el('quizFeedback'), ok, ok?'정답!':('오답: '+(w.meaning||'-')));
       idx++; renderQuiz();
     };
   }
