@@ -7,18 +7,17 @@
 <link rel="icon" href="logo.png"/>
 
 <style>
-@font-face {
-  font-family: 'GabiaSai';
-  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2510-1@1.0/GabiaSai-Regular.woff2') format('woff2');
-  font-weight: normal; font-display: swap;
+@font-face{
+  font-family:'GabiaSai';
+  src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2510-1@1.0/GabiaSai-Regular.woff2')format('woff2');
+  font-weight:normal;font-display:swap;
 }
 :root{
-  --primary:#58CC02; --accent:#FFD166; --info:#3A86FF;
-  --good:#A7E9AF; --bad:#F7A8A8; --bg:#F7FAF7; --text:#233042;
-  --br:#E6EFE5; --shadow:0 6px 18px rgba(0,0,0,.08);
+  --primary:#58CC02;--accent:#FFD166;--info:#3A86FF;
+  --good:#A7E9AF;--bad:#F7A8A8;--bg:#F7FAF7;--text:#233042;
+  --br:#E6EFE5;--shadow:0 6px 18px rgba(0,0,0,.08);
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:'GabiaSai',system-ui,-apple-system,Segoe UI,Noto Sans KR,sans-serif}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'GabiaSai',system-ui,-apple-system,Segoe UI,Noto Sans KR,sans-serif;}
 .container{max-width:900px;margin:0 auto;padding:16px 16px 120px}
 .hidden{display:none!important}
 .center{display:grid;place-items:center}
@@ -29,12 +28,12 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:'GabiaSai',syst
 
 /* Home */
 .home-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center}
-.home-logo img{width:160px;height:160px;margin-bottom:18px;border-radius:20px;box-shadow:var(--shadow)}
+.home-logo img{width:180px;height:180px;margin-bottom:18px;border-radius:24px;box-shadow:var(--shadow)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:460px}
 .card{background:#fff;border-radius:16px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--br);
 display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px;cursor:pointer}
 
-/* Stage select */
+/* Stage */
 .stage-wrap{max-width:520px;margin:0 auto;min-height:70vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
 .stage-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;width:100%}
 .stage{background:#fff;border-radius:10px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,.06);border:1px solid var(--br);font-size:15px;cursor:pointer;min-height:56px;width:100%}
@@ -42,7 +41,7 @@ display:flex;align-items:center;justify-content:center;font-weight:800;font-size
 .flag{border:1px solid var(--br);background:#fff;box-shadow:var(--shadow);padding:8px 12px;border-radius:12px;cursor:pointer}
 .flag.active{outline:3px solid var(--primary)}
 
-/* Timer + feedback */
+/* Feedback */
 .timer-area{margin:6px 0 10px}
 .timer{text-align:center;font-weight:800;font-size:15px}
 .timebar-wrap{height:10px;background:#E3EDFF;border:1px solid #CFE0FF;border-radius:999px;overflow:hidden;margin-top:6px}
@@ -53,38 +52,29 @@ display:flex;align-items:center;justify-content:center;font-weight:800;font-size
 .feedback.bad{background:#ffe7ea;color:#b33444;border:1px solid #ffc8d0}
 .feedback.show{visibility:visible;opacity:1}
 
-/* Study */
-.study-card{background:#fff;border-radius:16px;padding:22px;border:1px solid var(--br);box-shadow:var(--shadow);text-align:center;min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
-.word-index{font-size:13px;opacity:.7}
-.word-wrap{width:100%;display:flex;align-items:center;justify-content:center;min-height:80px}
-.word{font-weight:900;cursor:pointer;line-height:1.05;white-space:nowrap;max-width:100%;font-size:68px}
-.meta{display:flex;gap:10px;align-items:center;justify-content:center;color:#555;font-size:16px}
-.meaning{background:#FFF8EC;border:1px dashed #FFD166;padding:12px;border-radius:12px;width:100%;font-size:16px}
-.example{background:#F6FBFF;border:1px dashed #CFE0FF;padding:12px;border-radius:12px;width:100%;font-size:15px;line-height:1.6;min-height:78px;display:flex;align-items:center;justify-content:center;text-align:center}
-.tts-row{width:100%}
-.tts-btn{border:none;border-radius:12px;padding:12px 14px;font-weight:800;cursor:pointer;box-shadow:var(--shadow);background:#fff;border:1px solid var(--br);width:100%}
-
-/* Bottom bar (Study) */
-.bottom-bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #eee;display:flex;gap:10px;padding:10px 16px}
-.bottom-bar button{flex:1;border:none;border-radius:14px;padding:14px;font-size:18px;font-weight:800;box-shadow:var(--shadow);cursor:pointer}
-.prev-btn{background:#fff;color:var(--primary);border:2px solid var(--primary)}
-.next-btn{background:var(--primary);color:#fff}
-
 /* Quiz */
 .quiz-wrap{display:flex;align-items:center;justify-content:center;min-height:60vh}
-.quiz-card{position:relative;background:#fff;border-radius:16px;border:1px solid var(--br);box-shadow:var(--shadow);padding:22px;max-width:520px;width:100%;text-align:center;overflow:hidden}
+.quiz-card{position:relative;background:#fff;border-radius:16px;border:1px solid var(--br);box-shadow:var(--shadow);
+padding:22px;max-width:520px;width:100%;text-align:center;overflow:hidden;transition:transform .15s}
+.quiz-card.shake{animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-8px);}40%,80%{transform:translateX(8px);}}
+.quiz-card.flash-correct{animation:flashGreen 0.7s ease}
+@keyframes flashGreen{
+  0%{background:#fff;}
+  25%{background:#d4f8c4;}
+  50%{background:#c3f2b2;}
+  75%{background:#d4f8c4;}
+  100%{background:#fff;}
+}
 .quiz-progress{font-weight:900;margin-bottom:8px}
 .q-target-wrap{width:100%;display:flex;align-items:center;justify-content:center;min-height:90px}
-.q-target{font-weight:900;line-height:1.1;max-width:100%;white-space:nowrap;font-size:54px} /* 큰 폰트 기본값 */
-.input-row{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:10px}
-.input-row input{flex:1;padding:10px 12px;border:1px solid #ccc;border-radius:10px;font-size:16px;transition:transform .08s}
+.q-target{font-weight:900;line-height:1.1;max-width:100%;white-space:nowrap;font-size:54px}
+.input-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px}
+.input-row input{flex:1;padding:12px 14px;border:1px solid #ccc;border-radius:12px;font-size:17px}
+.btn-sm{flex:1;border:none;border-radius:12px;padding:14px 0;font-weight:700;font-size:18px;cursor:pointer;transition:.2s}
+.btn-submit{background:#58CC02;color:#fff}
+.btn-hint{background:#FFD166;color:#222}
 .hint{background:#FFF8EC;border:1px dashed #FFD166;padding:10px;border-radius:10px;margin-top:12px;font-size:14px;display:none}
-
-/* Wrong shake */
-.shake{animation:shake .25s}
-@keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-6px);}40%,80%{transform:translateX(6px);}}
-
-/* Combo stars */
 .star{position:absolute;pointer-events:none;opacity:0;transform:scale(.6);animation:pop .8s ease forwards}
 @keyframes pop{0%{opacity:0;transform:translateY(10px) scale(.6)}10%{opacity:1;transform:translateY(0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-20px) scale(1.1)}}
 </style>
@@ -95,7 +85,6 @@ display:flex;align-items:center;justify-content:center;font-weight:800;font-size
 <div id="loader" class="center" style="height:60vh"><div class="spinner"></div></div>
 
 <div id="app" class="container hidden">
-  <!-- Home -->
   <section id="homeView" class="view active">
     <div class="home-wrap">
       <div class="home-logo"><img src="logo.png" alt="logo"></div>
@@ -103,41 +92,6 @@ display:flex;align-items:center;justify-content:center;font-weight:800;font-size
         <button class="card" id="goStudy">📘 STUDY</button>
         <button class="card" id="goQuiz">📝 QUIZ</button>
       </div>
-    </div>
-  </section>
-
-  <!-- Stage selects -->
-  <section id="studySelectView" class="view">
-    <div class="stage-wrap">
-      <h3>Choose a Stage</h3>
-      <div class="stage-grid" id="studyStageGrid"></div>
-      <div class="flag-row">
-        <button class="flag" id="flagUS">🇺🇸 US</button>
-        <button class="flag" id="flagUK">🇬🇧 UK</button>
-      </div>
-    </div>
-  </section>
-  <section id="quizSelectView" class="view">
-    <div class="stage-wrap">
-      <h3>Choose a Stage</h3>
-      <div class="stage-grid" id="quizStageGrid"></div>
-    </div>
-  </section>
-
-  <!-- Study -->
-  <section id="studyView" class="view">
-    <div class="timer-area">
-      <div class="timer" id="studyTimer">남은 시간: 30:00</div>
-      <div class="timebar-wrap"><div id="studyBar" class="timebar"></div></div>
-      <div class="feedback-slot"><div id="studyFeedback" class="feedback"></div></div>
-    </div>
-    <div class="study-card">
-      <div class="word-index" id="wordIndex">1/150</div>
-      <div class="word-wrap"><div class="word" id="sWord" title="탭하면 발음">word</div></div>
-      <div class="meta"><span id="sPron"></span><span id="sIpa"></span></div>
-      <div class="meaning" id="sMeaning"></div>
-      <div class="example" id="sExample">—</div>
-      <div class="tts-row"><button class="tts-btn" id="playTts">🔊 발음 듣기</button></div>
     </div>
   </section>
 
@@ -156,263 +110,91 @@ display:flex;align-items:center;justify-content:center;font-weight:800;font-size
           <input id="qInput" placeholder="정답 입력"/>
         </div>
         <div class="input-row">
-          <button class="btn-sm" id="qSubmit" style="background:#58CC02;color:#fff;border:none;border-radius:10px;">제출</button>
-          <button class="btn-sm" id="qHintBtn" style="background:#FFD166;border:none;border-radius:10px;">힌트</button>
+          <button class="btn-sm btn-submit" id="qSubmit">제출</button>
+          <button class="btn-sm btn-hint" id="qHintBtn">힌트</button>
         </div>
         <div class="hint" id="qHint">예문</div>
       </div>
     </div>
   </section>
-
-  <!-- Quiz Result -->
-  <section id="quizResultView" class="view">
-    <div class="result-wrap">
-      <div class="result-card">
-        <h3>퀴즈 결과</h3>
-        <canvas id="resultChart" width="260" height="260"></canvas>
-        <div style="display:flex;gap:12px;justify-content:center;margin:10px 0">
-          <div class="badge">맞은 개수: <strong id="resCorrect">0</strong></div>
-          <div class="badge">틀린 개수: <strong id="resWrong">0</strong></div>
-          <div class="badge">총 문항: <strong id="resTotal">150</strong></div>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <button class="btn" id="btnDownloadWrong">📄 오답노트 다운로드</button>
-          <button class="btn btn-primary" id="btnRetryWrong">🔁 오답 재풀이</button>
-          <button class="btn" id="btnGoHome">🏠 홈으로</button>
-        </div>
-      </div>
-    </div>
-  </section>
 </div>
 
-<!-- Bottom Prev/Next (Study only) -->
-<div class="bottom-bar hidden" id="bottomBar">
-  <button class="prev-btn" id="prevBtn">← 이전</button>
-  <button class="next-btn" id="nextBtn">다음 →</button>
-</div>
-
-<!-- SheetJS -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
-/* ---------- helpers ---------- */
 const el=id=>document.getElementById(id);
-const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-function show(elm){elm.classList.add('active');} function hide(elm){elm.classList.remove('active');}
-function switchView(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active')); v.classList.add('active'); window.scrollTo({top:0});}
 
-/* Fixed-height feedback */
-function feedback(node, ok, msg){ node.textContent=msg || (ok?'정답!':'오답'); node.classList.remove('ok','bad','show'); node.classList.add(ok?'ok':'bad','show'); clearTimeout(node._t); node._t=setTimeout(()=>node.classList.remove('show'),1200); }
+/* 사운드 파일 */
+const sounds={
+  correct:new Audio('/sounds/correct.wav'),
+  wrong:new Audio('/sounds/wrong.wav'),
+  continuous:new Audio('/sounds/continuous.wav')
+};
+Object.values(sounds).forEach(a=>{a.preload='auto';a.volume=0.9;});
+function playSound(type){const a=sounds[type];if(a){a.currentTime=0;a.play().catch(()=>{});}}
 
-/* ---------- Audio (WebAudio) ---------- */
-const AudioCtx = window.AudioContext||window.webkitAudioContext;
-const audioCtx = new AudioCtx();
-function tone(freq, dur, type='sine', gain=0.14){
-  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-  o.type=type; o.frequency.value=freq; g.gain.value=gain;
-  o.connect(g); g.connect(audioCtx.destination);
-  o.start(); o.stop(audioCtx.currentTime + dur/1000);
-}
-/* pleasant correct + combo */
-function sfxCorrect(streak=1){
-  if(streak>=3){ // 작은 아르페지오
-    tone(880,100,'triangle'); setTimeout(()=>tone(1200,110,'sine'),80);
-    setTimeout(()=>tone(1600,140,'sine',0.16),160);
-  }else{
-    tone(880,100,'triangle'); setTimeout(()=>tone(1320,120,'sine'),80);
-  }
-}
-/* annoying-ish wrong */
-function sfxWrong(){
-  tone(220,180,'sawtooth'); setTimeout(()=>tone(170,160,'square'),140);
-}
-
-/* ---------- Combo stars ---------- */
-function burstStars(container, count=6){
+/* 별 이펙트 */
+function burstStars(container,count=6){
   for(let i=0;i<count;i++){
-    const s=document.createElement('div'); s.className='star'; s.textContent='⭐';
-    const x = 20 + Math.random()*60; const y=20 + Math.random()*40;
-    s.style.left=x+'%'; s.style.top=y+'%'; s.style.fontSize=(18+Math.random()*8)+'px';
-    container.appendChild(s); setTimeout(()=>s.remove(),800);
+    const s=document.createElement('div');s.className='star';s.textContent='⭐';
+    const x=20+Math.random()*60;const y=20+Math.random()*40;
+    s.style.left=x+'%';s.style.top=y+'%';s.style.fontSize=(18+Math.random()*8)+'px';
+    container.appendChild(s);setTimeout(()=>s.remove(),800);
   }
 }
 
-/* ---------- TTS (US/UK) ---------- */
-let ttsUnlocked=false, voices=[];
-if('speechSynthesis' in window){
-  voices = window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = ()=>voices = window.speechSynthesis.getVoices();
-}
-function unlockTTS(){ try{ const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); speechSynthesis.resume(); ttsUnlocked=true; }catch{} }
-['touchstart','click'].forEach(ev=>window.addEventListener(ev,()=>{ if(!ttsUnlocked && 'speechSynthesis'in window) unlockTTS(); },{capture:true}));
-
-const Settings={ ttsLang:'en-US' };
-function updateFlagUI(){ el('flagUS').classList.toggle('active', Settings.ttsLang==='en-US'); el('flagUK').classList.toggle('active', Settings.ttsLang==='en-GB'); }
-function speak(text){ if(!text || !('speechSynthesis'in window))return; const u=new SpeechSynthesisUtterance(text); u.lang=Settings.ttsLang; try{ speechSynthesis.cancel(); setTimeout(()=>speechSynthesis.speak(u),30);}catch{} }
-
-/* ---------- Data & Stage ---------- */
-const PER=150, STAGES=30, WORDS_XLSX_URL='./word_list.xlsx';
-let data=[], stage=1, idx=0, timer=null, remain=1800;
-
-async function loadExcel(){
-  try{
-    const r=await fetch(WORDS_XLSX_URL); if(!r.ok) throw 0;
-    const ab=await r.arrayBuffer();
-    const wb=XLSX.read(ab,{type:'array'});
-    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:""});
-    const hdr=rows[0]||[], keys=new Set(hdr.map(v=>String(v).toLowerCase().trim()));
-    const body=(keys.has('word')||keys.has('meaning_ko'))? rows.slice(1): rows;
-    return body.map(r=>({word:String(r[0]||'').trim(), meaning:String(r[1]||'').trim(), pron:String(r[2]||'').trim(), ipa:String(r[3]||'').trim(), ex:String(r[4]||'').trim()})).filter(x=>x.word);
-  }catch{
-    // fallback demo
-    return [
-      {word:'enthusiastic',meaning:'열광적인, 열렬한',pron:'',ipa:'',ex:'The audience was enthusiastic about the presentation.'},
-      {word:'abandon',meaning:'버리다, 포기하다',pron:'',ipa:'',ex:'He had to abandon the plan.'},
-      {word:'ability',meaning:'능력',pron:'',ipa:'',ex:'She has the ability to lead.'}
-    ];
-  }
+/* 피드백 */
+function feedback(node,ok,msg){
+  node.textContent=msg||(ok?'정답!':'오답');
+  node.classList.remove('ok','bad','show');
+  node.classList.add(ok?'ok':'bad','show');
+  clearTimeout(node._t);
+  node._t=setTimeout(()=>node.classList.remove('show'),1200);
 }
 
-function buildStageGrid(container, cb){
-  container.innerHTML='';
-  for(let i=1;i<=STAGES;i++){
-    const b=document.createElement('button'); b.className='stage'; b.textContent=String(i).padStart(2,'0'); b.onclick=()=>cb(i);
-    container.appendChild(b);
-  }
-}
+/* 데이터 샘플 */
+const quizData=[
+  {word:"enthusiastic",meaning:"열광적인, 열렬한",ex:"The audience was enthusiastic about the show."},
+  {word:"abandon",meaning:"버리다, 포기하다",ex:"He had to abandon his plan."},
+  {word:"ability",meaning:"능력",ex:"She has the ability to lead."}
+];
 
-function startTimer(labelId, barId){
-  if(timer) clearInterval(timer);
-  remain=1800; const t=el(labelId), bar=el(barId);
-  t.textContent='남은 시간: '+fmt(remain); bar.style.width='100%';
-  timer=setInterval(()=>{ remain--; t.textContent='남은 시간: '+fmt(remain); bar.style.width=(remain/1800*100)+'%'; if(remain<=0) clearInterval(timer); },1000);
-}
+let idx=0,qMode='KO2EN',qItem=null,streak=0;
 
-/* ---------- Study ---------- */
-function startStudy(n){
-  stage=n; idx=0; el('bottomBar').classList.remove('hidden');
-  switchView(el('studyView')); startTimer('studyTimer','studyBar'); renderStudy();
-}
-function fitWord(){
-  const w=el('sWord'); let size=68, min=28; w.style.fontSize=size+'px';
-  const p=w.parentElement; while((w.scrollWidth>p.clientWidth*0.92 || w.scrollHeight>80) && size>min){ size-=2; w.style.fontSize=size+'px'; }
-}
-function renderStudy(){
-  const list=data.slice((stage-1)*PER, stage*PER); const it=list[idx]; if(!it) return;
-  el('wordIndex').textContent=`${idx+1}/${list.length}`;
-  el('sWord').textContent=it.word; el('sPron').textContent=it.pron||''; el('sIpa').textContent=it.ipa||'';
-  el('sMeaning').textContent=it.meaning||''; el('sExample').textContent=it.ex||''; requestAnimationFrame(fitWord);
-}
-el('sWord').onclick=()=>speak(el('sWord').textContent);
-el('sExample').onclick=()=>speak(el('sExample').textContent);
-el('playTts').onclick=()=>speak(el('sWord').textContent);
-el('prevBtn').onclick=()=>{ idx=Math.max(0,idx-1); renderStudy(); };
-el('nextBtn').onclick=()=>{ idx++; renderStudy(); };
-
-/* ---------- Quiz ---------- */
-let quizList=[], quizStats={total:0,correct:0,wrong:0,wrongItems:[]}, qMode='KO2EN', qItem=null, streak=0;
-function startQuiz(n){
-  stage=n; quizList=data.slice((stage-1)*PER, stage*PER); startQuizWithList(quizList);
-}
-function startQuizWithList(list){
-  quizList=list.slice(); idx=0; streak=0;
-  quizStats={total:quizList.length,correct:0,wrong:0,wrongItems:[]};
-  el('bottomBar').classList.add('hidden');
-  switchView(el('quizView')); startTimer('quizTimer','quizBar'); renderQuiz();
-}
-function normalizeKoPieces(s){return (s||'').split(',').map(x=>x.replace(/\s+/g,'')).filter(Boolean);}
-function fitQuizTarget(){
-  const t=el('qTarget'); let size=54, min=20; t.style.fontSize=size+'px';
-  const wrap=t.parentElement; while((t.scrollWidth>wrap.clientWidth*0.95 || t.scrollHeight>wrap.clientHeight) && size>min){ size-=2; t.style.fontSize=size+'px'; }
-}
 function renderQuiz(){
-  const it=quizList[idx];
-  if(!it){ if(timer) clearInterval(timer); showQuizResult(); return; }
-  qItem=it; qMode=Math.random()<0.5?'KO2EN':'EN2KO';
-  el('qProgress').textContent=`${idx+1}/${quizList.length}`;
-  el('qInput').value=''; el('qHint').style.display='none';
-  el('qTarget').textContent = qMode==='KO2EN' ? (it.meaning||'뜻 정보 없음') : (it.word||'-');
-  el('qHint').textContent = it.ex || '예문 없음';
-  requestAnimationFrame(fitQuizTarget);
+  const it=quizData[idx%quizData.length];
+  qItem=it;qMode=Math.random()<0.5?'KO2EN':'EN2KO';
+  el('qTarget').textContent=qMode==='KO2EN'?it.meaning:it.word;
+  el('qHint').textContent=it.ex;el('qInput').value='';
 }
-el('qHintBtn')?.addEventListener('click', ()=>{ const h=el('qHint'); h.style.display = h.style.display==='none'?'block':'none'; });
+renderQuiz();
 
+/* 제출 */
 function submitQuiz(){
-  if(!qItem) return;
-  const raw=(el('qInput').value||'').trim();
+  const val=(el('qInput').value||'').trim();
+  const card=el('quizCard');
   let ok=false;
-  if(qMode==='KO2EN'){
-    const user=raw.toLowerCase().replace(/[^a-z]/g,''); const ans=(qItem.word||'').toLowerCase().replace(/[^a-z]/g,'');
-    ok = user.length>0 && user===ans;
-  }else{
-    const user=raw.replace(/\s+/g,'');
-    if(user.length>0){ const answers=normalizeKoPieces(qItem.meaning); ok = answers.some(a=>a && (a===user || a.includes(user) || user.includes(a))); }
-    else ok=false;
-  }
+  if(qMode==='KO2EN'){ok=val.toLowerCase()===qItem.word.toLowerCase();}
+  else{ok=val.replace(/\s+/g,'')===qItem.meaning.replace(/\s+/g,'');}
 
   if(ok){
-    quizStats.correct++; streak++;
+    streak++;
     feedback(el('quizFeedback'),true,'정답!');
-    sfxCorrect(streak);
-    if(streak>=3) burstStars(el('quizCard'));
+    playSound(streak>=3?'continuous':'correct');
+    card.classList.remove('flash-correct');
+    void card.offsetWidth;
+    card.classList.add('flash-correct');
+    if(streak>=3) burstStars(card);
   }else{
-    quizStats.wrong++; streak=0;
-    feedback(el('quizFeedback'),false,'정답: '+(qMode==='KO2EN'? qItem.word : (qItem.meaning||'-')));
-    sfxWrong();
-    el('qInput').classList.remove('shake'); void el('qInput').offsetWidth; el('qInput').classList.add('shake');
-    quizStats.wrongItems.push(qItem);
+    streak=0;
+    feedback(el('quizFeedback'),false,'정답: '+(qMode==='KO2EN'?qItem.word:qItem.meaning));
+    playSound('wrong');
+    card.classList.remove('shake');void card.offsetWidth;card.classList.add('shake');
   }
-  idx++; renderQuiz();
+  idx++;renderQuiz();
 }
+
 el('qSubmit').onclick=submitQuiz;
-el('qInput').addEventListener('keydown',e=>{ if(e.key==='Enter') submitQuiz(); });
-
-/* ---------- Results (donut) ---------- */
-function drawDonut(canvas, correct, wrong){
-  const dpr=Math.max(1,window.devicePixelRatio||1), cssW=canvas.width, cssH=canvas.height;
-  canvas.style.width=cssW+'px'; canvas.style.height=cssH+'px'; canvas.width=cssW*dpr; canvas.height=cssH*dpr;
-  const ctx=canvas.getContext('2d'), cx=canvas.width/2, cy=canvas.height/2, r=Math.min(cx,cy)-8*dpr;
-  const total=Math.max(1,correct+wrong), okA=(correct/total)*Math.PI*2, wrongA=(wrong/total)*Math.PI*2;
-  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle='#F9FBF9'; ctx.fill();
-  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+okA); ctx.closePath(); ctx.fillStyle=varGood(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,-Math.PI/2+okA,-Math.PI/2+okA+wrongA); ctx.closePath(); ctx.fillStyle=varBad(); ctx.fill();
-  ctx.beginPath(); ctx.arc(cx,cy,r*0.55,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
-  ctx.fillStyle='#233042'; ctx.font=(20*dpr)+'px GabiaSai'; ctx.textBaseline='middle';
-  const txt=Math.round(correct/total*100)+'%'; const tw=ctx.measureText(txt).width; ctx.fillText(txt,cx-tw/2,cy);
-}
-const varGood=()=>getComputedStyle(document.documentElement).getPropertyValue('--good').trim()||'#A7E9AF';
-const varBad =()=>getComputedStyle(document.documentElement).getPropertyValue('--bad').trim()||'#F7A8A8';
-function showQuizResult(){
-  el('resCorrect').textContent=quizStats.correct; el('resWrong').textContent=quizStats.wrong; el('resTotal').textContent=quizStats.total;
-  drawDonut(el('resultChart'), quizStats.correct, quizStats.wrong);
-  switchView(el('quizResultView'));
-}
-/* download wrong note (UTF-8 BOM) */
-el('btnDownloadWrong')?.addEventListener('click',()=>{
-  const lines=quizStats.wrongItems.map(w=>`${w.word} - ${w.meaning}${w.ex?` (${w.ex})`:''}`);
-  const content='\ufeff'+(lines.join('\n')||'오답이 없습니다.');
-  const blob=new Blob([content],{type:'text/plain;charset=utf-8'}); const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download=`오답노트_stage${stage}.txt`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-});
-el('btnRetryWrong')?.addEventListener('click',()=>{ const wrong=quizStats.wrongItems.slice(); if(!wrong.length){alert('오답이 없습니다.');return;} startQuizWithList(wrong); });
-el('btnGoHome')?.addEventListener('click',()=>switchView(el('homeView')));
-
-/* ---------- Nav / Flags ---------- */
-el('goStudy').onclick=()=>switchView(el('studySelectView'));
-el('goQuiz').onclick =()=>switchView(el('quizSelectView'));
-el('titleBtn').onclick=()=>{ switchView(el('homeView')); el('bottomBar').classList.add('hidden'); };
-el('flagUS').onclick=()=>{ Settings.ttsLang='en-US'; updateFlagUI(); };
-el('flagUK').onclick=()=>{ Settings.ttsLang='en-GB'; updateFlagUI(); };
-
-/* ---------- Init ---------- */
-(async()=>{
-  try{ data=await loadExcel(); }
-  finally{
-    buildStageGrid(el('studyStageGrid'), startStudy);
-    buildStageGrid(el('quizStageGrid'),  startQuiz);
-    updateFlagUI();
-    el('loader').classList.add('hidden'); el('app').classList.remove('hidden');
-  }
-})();
+el('qInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitQuiz();});
+el('qHintBtn').onclick=()=>{const h=el('qHint');h.style.display=h.style.display==='none'?'block':'none';};
 </script>
 </body>
 </html>
