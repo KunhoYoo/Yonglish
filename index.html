@@ -139,6 +139,19 @@ body{
 .btn-submit{background:#58CC02;color:#fff}
 .btn-hint{background:#FFD166;color:#222}
 .hint{background:#FFF8EC;border:1px dashed #FFD166;padding:10px;border-radius:10px;margin-top:10px;font-size:14px;display:none}
+
+/* Quiz Result */
+.result-wrap{display:flex;align-items:center;justify-content:center;min-height:60vh}
+.result-card{
+  background:#fff;border-radius:16px;border:1px solid var(--br);box-shadow:var(--shadow);
+  padding:22px;max-width:560px;width:100%;text-align:center
+}
+.result-stats{display:flex;gap:12px;justify-content:center;margin:10px 0}
+.badge{padding:8px 12px;border-radius:10px;border:1px solid var(--br);background:#f9fbf9}
+.btn-row{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.btn{border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;box-shadow:var(--shadow);background:#fff;border:1px solid var(--br)}
+.btn-primary{background:var(--primary);color:#fff;border:none}
+canvas{max-width:260px;width:100%;height:auto}
 </style>
 </head>
 <body>
@@ -211,6 +224,26 @@ body{
           <button class="btn-sm btn-hint" id="qHintBtn">힌트</button>
         </div>
         <div class="hint" id="qHint">예문</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quiz Result -->
+  <section id="quizResultView" class="view">
+    <div class="result-wrap">
+      <div class="result-card">
+        <h3>퀴즈 결과</h3>
+        <canvas id="resultChart" width="260" height="260" aria-label="결과 차트"></canvas>
+        <div class="result-stats">
+          <div class="badge">맞은 개수: <strong id="resCorrect">0</strong></div>
+          <div class="badge">틀린 개수: <strong id="resWrong">0</strong></div>
+          <div class="badge">총 문항: <strong id="resTotal">150</strong></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="btnDownloadWrong">📄 오답노트 다운로드</button>
+          <button class="btn btn-primary" id="btnRetryWrong">🔁 오답 재풀이</button>
+          <button class="btn" id="btnGoHome">🏠 홈으로</button>
+        </div>
       </div>
     </div>
   </section>
@@ -289,6 +322,12 @@ if('speechSynthesis' in window){
 const PER=150, STAGES=30;
 const WORDS_XLSX_URL="./word_list.xlsx";
 let data=[], stage=1, idx=0, timer=null, remain=1800;
+
+/* Quiz state */
+let qMode='KO2EN'; // 'KO2EN' or 'EN2KO'
+let qItem=null;
+let quizList=null;           // 현재 퀴즈에 쓰는 목록(기본: 해당 스테이지 슬라이스)
+let quizStats=null;          // { total, correct, wrong, wrongItems:[{word,meaning,ex}] }
 
 /* ===== Views ===== */
 function switchView(v){
@@ -372,12 +411,16 @@ el('playTts').addEventListener('click', ()=> speak(el('sWord').textContent));
 el('prevBtn').addEventListener('click', ()=>{ idx=Math.max(0,idx-1); renderStudy(); });
 el('nextBtn').addEventListener('click', ()=>{ idx++; renderStudy(); });
 
-/* ===== Quiz (KO↔EN mix, comma partial + empty guard) ===== */
-let qMode='KO2EN'; // 'KO2EN' or 'EN2KO'
-let qItem=null;
-
+/* ===== Quiz (full + wrong-only retry) ===== */
 function startQuiz(n){
-  stage=n; idx=0;
+  stage=n;
+  quizList = data.slice((stage-1)*PER, stage*PER);
+  startQuizWithList(quizList);
+}
+function startQuizWithList(list){
+  idx=0;
+  quizList = list.slice(); // copy
+  quizStats = { total: quizList.length, correct:0, wrong:0, wrongItems:[] };
   el('bottomBar').classList.add('hidden');
   switchView(el('quizView'));
   startTimer('quizTimer','quizBar');
@@ -385,12 +428,16 @@ function startQuiz(n){
 }
 function normalizeKoPieces(s){return (s||'').split(',').map(x=>x.replace(/\s+/g,'')).filter(Boolean);}
 function renderQuiz(){
-  const list=data.slice((stage-1)*PER, stage*PER);
-  const w=list[idx]; if(!w){ feedback(el('quizFeedback'), true, '퀴즈 종료!'); return;}
+  const w=quizList[idx];
+  if(!w){ // 종료
+    if(timer) clearInterval(timer);
+    showQuizResult();
+    return;
+  }
   qMode = Math.random()<0.5 ? 'KO2EN' : 'EN2KO';
   qItem = w;
 
-  el('qProgress').textContent=(idx+1)+"/"+list.length;
+  el('qProgress').textContent=(idx+1)+"/"+quizList.length;
   el('qInput').value=''; el('qHint').style.display='none';
 
   if(qMode==='KO2EN'){
@@ -401,35 +448,108 @@ function renderQuiz(){
     el('qHint').textContent=w.ex || '예문 없음';
   }
 }
-
 el('qSubmit').addEventListener('click', ()=>{
   if(!qItem) return;
   const raw = (el('qInput').value||'').trim();
-  let ok=false, answerText='';
+  let ok=false;
 
   if(qMode==='KO2EN'){
     const user = raw.toLowerCase().replace(/[^a-z]/g,'');
     const ans  = (qItem.word||'').toLowerCase().replace(/[^a-z]/g,'');
-    ok = user.length>0 && user===ans;         // ← 빈 입력 방지
-    answerText = qItem.word || '';
+    ok = user.length>0 && user===ans;
   }else{ // EN2KO
-    const user = raw.replace(/\s+/g,'');      // 한글 공백 제거
-    if(user.length>0){                         // ← 빈 입력 방지
+    const user = raw.replace(/\s+/g,'');
+    if(user.length>0){
       const answers = normalizeKoPieces(qItem.meaning);
       ok = answers.some(a=>a && (a===user || a.includes(user) || user.includes(a)));
-    } else {
-      ok = false;
-    }
-    answerText = qItem.meaning || '';
+    } else ok=false;
   }
 
-  if(ok) feedback(el('quizFeedback'), true, '정답!');
-  else   feedback(el('quizFeedback'), false, '정답: ' + answerText);
+  if(ok){ quizStats.correct++; feedback(el('quizFeedback'), true, '정답!'); }
+  else  { quizStats.wrong++; quizStats.wrongItems.push(qItem); feedback(el('quizFeedback'), false, '정답: ' + (qMode==='KO2EN'? qItem.word : (qItem.meaning||'-'))); }
 
   idx++; renderQuiz();
 });
 el('qHintBtn').addEventListener('click', ()=>{ const h=el('qHint'); h.style.display=h.style.display==='none'?'block':'none'; });
 el('qInput').addEventListener('keydown', e=>{ if(e.key==='Enter') el('qSubmit').click(); });
+
+/* ===== Quiz Result ===== */
+function showQuizResult(){
+  // 채우기
+  el('resCorrect').textContent = quizStats.correct;
+  el('resWrong').textContent   = quizStats.wrong;
+  el('resTotal').textContent   = quizStats.total;
+
+  // 차트 그리기(원형)
+  const c = el('resultChart');
+  const ctx = c.getContext('2d');
+  const total = Math.max(1, quizStats.total);
+  const okAngle = (quizStats.correct/total)*Math.PI*2;
+  const wrongAngle = (quizStats.wrong/total)*Math.PI*2;
+  // clear
+  ctx.clearRect(0,0,c.width,c.height);
+  const cx=c.width/2, cy=c.height/2, r=Math.min(cx,cy)-8;
+
+  // 배경 원(연한 회색)
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle='#f2f4f7'; ctx.fill();
+
+  // 정답(초록)
+  ctx.beginPath(); ctx.moveTo(cx,cy);
+  ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+okAngle,false);
+  ctx.closePath(); ctx.fillStyle='#58CC02'; ctx.fill();
+
+  // 오답(핑크)
+  ctx.beginPath(); ctx.moveTo(cx,cy);
+  ctx.arc(cx,cy,r,-Math.PI/2+okAngle,-Math.PI/2+okAngle+wrongAngle,false);
+  ctx.closePath(); ctx.fillStyle='#FF6B6B'; ctx.fill();
+
+  // 도넛 구멍
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.55,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+
+  // 가운데 텍스트 (정답률)
+  ctx.fillStyle='#233042'; ctx.font='bold 22px GabiaSai, sans-serif';
+  const pct = Math.round((quizStats.correct/total)*100);
+  const txt = pct+'%';
+  const tw = ctx.measureText(txt).width;
+  ctx.fillText(txt, cx-tw/2, cy+8);
+
+  // 뷰 전환
+  switchView(el('quizResultView'));
+}
+
+/* 다운로드: 오답노트 txt */
+el('btnDownloadWrong').addEventListener('click', ()=>{
+  const lines = quizStats.wrongItems.map(w=>{
+    // "word - meaning (example)"
+    const ex = w.ex ? ` (${w.ex})` : '';
+    return `${w.word} - ${w.meaning}${ex}`;
+  });
+  const content = lines.join('\n') || '오답이 없습니다.';
+  const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `오답노트_stage${stage}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
+/* 오답 재풀이 */
+el('btnRetryWrong').addEventListener('click', ()=>{
+  const wrong = quizStats.wrongItems.slice();
+  if(wrong.length===0){
+    alert('오답이 없습니다. 전체를 다시 풀어보세요!');
+    return;
+  }
+  startQuizWithList(wrong);
+});
+
+/* 홈으로 */
+el('btnGoHome').addEventListener('click', ()=>{
+  switchView(el('homeView'));
+});
 
 /* ===== Navigation ===== */
 el('goStudy').addEventListener('click', ()=>{ switchView(el('studySelectView')); });
