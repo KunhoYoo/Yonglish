@@ -13,7 +13,6 @@
   font-weight: normal;
   font-display: swap;
 }
-/* Theme */
 :root{
   --primary:#58CC02; --accent:#FFD166; --info:#3A86FF;
   --text:#233042; --bg:#F7FAF7; --white:#fff;
@@ -33,7 +32,7 @@ body{
 .spinner{width:48px;height:48px;border:5px solid #e6f4e5;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* AppBar (title only, no logo) */
+/* AppBar (title only) */
 .appbar{
   position:sticky;top:0;z-index:20;
   display:flex;align-items:center;justify-content:center;
@@ -47,23 +46,26 @@ body{
 
 /* Home */
 .home-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center}
-.home-logo img{width:96px;height:96px;margin-bottom:18px;border-radius:16px;box-shadow:var(--shadow)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:420px}
+.home-logo img{width:128px;height:128px;margin-bottom:18px;border-radius:16px;box-shadow:var(--shadow)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:460px}
 .card{
-  background:#fff;border-radius:16px;padding:20px;
+  background:#fff;border-radius:16px;padding:22px;
   box-shadow:var(--shadow);border:1px solid var(--br);
   display:flex;align-items:center;justify-content:center;gap:8px;
-  font-weight:700;font-size:18px;min-height:100px;cursor:pointer;
+  font-weight:800;font-size:22px;min-height:110px;cursor:pointer;
 }
 
-/* Stage Grid (center) */
-.stage-wrap{max-width:520px;margin:0 auto;text-align:center}
-.stage-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;justify-items:center}
+/* Stage Grid (centered vertically & horizontally) */
+.stage-wrap{
+  max-width:520px;margin:0 auto;text-align:center;
+  min-height:70vh; display:flex; flex-direction:column; justify-content:center; align-items:center;
+}
+.stage-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;justify-items:center;width:100%}
 .stage{
   background:#fff;border-radius:10px;padding:12px;
   box-shadow:0 4px 12px rgba(0,0,0,.06);border:1px solid var(--br);
   display:flex;align-items:center;justify-content:center;
-  font-size:14px;cursor:pointer;min-height:56px;width:100%;
+  font-size:15px;cursor:pointer;min-height:56px;width:100%;
 }
 
 /* Timer + progress */
@@ -98,12 +100,11 @@ body{
   background:#F6FBFF;border:1px dashed var(--br-info);padding:12px;border-radius:12px;width:100%;
   font-size:15px;line-height:1.6;min-height:78px;display:flex;align-items:center;justify-content:center;text-align:center;
 }
-.tts-row{display:flex;gap:8px;justify-content:center}
-.btn{
-  border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;
-  box-shadow:var(--shadow);background:#fff;border:1px solid var(--br)
+.tts-row{width:100%}
+.tts-btn{
+  border:none;border-radius:12px;padding:12px 14px;font-weight:800;cursor:pointer;
+  box-shadow:var(--shadow);background:#fff;border:1px solid var(--br);width:100%;
 }
-.btn-primary{background:var(--primary);color:#fff;border:none}
 
 /* Bottom nav (Study) */
 .bottom-bar{
@@ -134,7 +135,6 @@ body{
 </style>
 </head>
 <body>
-<!-- Title without logo image -->
 <div class="appbar" id="titleBtn">Voca Han&Hyo</div>
 
 <!-- Loader -->
@@ -146,11 +146,8 @@ body{
     <div class="home-wrap">
       <div class="home-logo"><img src="logo.png" alt="logo"></div>
       <div class="grid2">
-        <button class="card" id="goStudy">📘 Study</button>
-        <button class="card" id="goQuiz">📝 Quiz</button>
-      </div>
-      <div style="margin-top:14px">
-        <button class="btn btn-primary" id="enableTTS">🔊 발음 활성화</button>
+        <button class="card" id="goStudy">📘 STUDY</button>
+        <button class="card" id="goQuiz">📝 QUIZ</button>
       </div>
     </div>
   </section>
@@ -182,9 +179,7 @@ body{
       <div class="meta"><span id="sPron"></span><span id="sIpa"></span></div>
       <div class="meaning" id="sMeaning"></div>
       <div class="example" id="sExample">—</div>
-      <div class="tts-row">
-        <button class="btn" id="playTts">🔊 발음 듣기</button>
-      </div>
+      <div class="tts-row"><button class="tts-btn" id="playTts">🔊 발음 듣기</button></div>
     </div>
   </section>
 
@@ -199,9 +194,7 @@ body{
       <div class="quiz-card">
         <div class="quiz-progress" id="qProgress">1/150</div>
         <div class="quiz-target" id="qTarget">—</div>
-        <div class="input-row">
-          <input id="qInput" placeholder="정답 입력"/>
-        </div>
+        <div class="input-row"><input id="qInput" placeholder="정답 입력"/></div>
         <div class="input-row">
           <button class="btn-sm btn-submit" id="qSubmit">제출</button>
           <button class="btn-sm btn-hint" id="qHintBtn">힌트</button>
@@ -232,31 +225,28 @@ function feedback(node, ok, msg){
   node._t=setTimeout(()=>node.style.display='none',1200);
 }
 
-/* ===== Robust TTS (unlock flow) ===== */
+/* ===== Robust TTS (auto unlock on first gesture) ===== */
 let voices=[], ttsUnlocked=false;
 function loadVoices(){ voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
 function unlockTTS(){
   if(!('speechSynthesis' in window)) return false;
   try{
     window.speechSynthesis.cancel();
-    // tiny, muted utterance to satisfy gesture requirement (iOS/Safari)
     const u=new SpeechSynthesisUtterance(' ');
     u.volume=0; u.rate=1; u.pitch=1; u.lang='en-US';
     window.speechSynthesis.speak(u);
     window.speechSynthesis.resume();
-    ttsUnlocked=true;
-    return true;
+    ttsUnlocked=true; return true;
   }catch(e){ return false; }
 }
 function speak(word){
   if(!word || !('speechSynthesis' in window)) return;
-  if(!ttsUnlocked) { /* try auto-unlock on first usage */ unlockTTS(); }
+  if(!ttsUnlocked) unlockTTS();
   const u=new SpeechSynthesisUtterance(word);
   u.lang='en-US'; u.rate=0.95; u.pitch=1.0;
   const v = voices.find(v=>/en(-|_)?US/i.test(v.lang)) || voices.find(v=>/^en/i.test(v.lang));
   if(v) u.voice=v;
   try{
-    // Some browsers ignore immediate speak after cancel; delay a tick
     window.speechSynthesis.cancel();
     setTimeout(()=>{ window.speechSynthesis.resume(); window.speechSynthesis.speak(u); }, 30);
   }catch(e){}
@@ -264,7 +254,6 @@ function speak(word){
 if('speechSynthesis' in window){
   loadVoices();
   window.speechSynthesis.onvoiceschanged = loadVoices;
-  // Extra unlock hooks
   ['click','touchstart'].forEach(ev=>{
     window.addEventListener(ev, ()=>{ if(!ttsUnlocked) unlockTTS(); }, {once:false,capture:true});
   });
@@ -405,15 +394,11 @@ el('qInput').addEventListener('keydown', e=>{ if(e.key==='Enter') el('qSubmit').
 el('goStudy').addEventListener('click', ()=>{ switchView(el('studySelectView')); });
 el('goQuiz').addEventListener('click',  ()=>{ switchView(el('quizSelectView')); });
 el('titleBtn').addEventListener('click', ()=>{ switchView(el('homeView')); el('bottomBar').classList.add('hidden'); });
-el('enableTTS').addEventListener('click', ()=>{
-  if(unlockTTS()){ el('enableTTS').textContent='🔊 발음 활성화됨'; el('enableTTS').disabled=true; }
-});
 
 /* ===== Init ===== */
 (async()=>{
   if('speechSynthesis' in window){
     loadVoices();
-    // try to pre-unlock on first user gesture as well
     ['click','touchstart'].forEach(ev=>{
       window.addEventListener(ev, ()=>{ if(!ttsUnlocked) unlockTTS(); }, {once:true,capture:true});
     });
