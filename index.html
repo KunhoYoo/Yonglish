@@ -7,19 +7,16 @@
 <link rel="icon" href="logo.png"/>
 
 <style>
-/* ===== Font ===== */
 @font-face {
   font-family: 'GabiaSai';
   src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2510-1@1.0/GabiaSai-Regular.woff2') format('woff2');
   font-weight: normal;
   font-display: swap;
 }
-
-/* ===== Theme ===== */
+/* Theme */
 :root{
-  --primary:#58CC02; --accent:#FFD166;
+  --primary:#58CC02; --accent:#FFD166; --info:#3A86FF;
   --text:#233042; --bg:#F7FAF7; --white:#fff;
-  --info:#3A86FF;
   --shadow:0 6px 18px rgba(0,0,0,.08);
   --br:#E6EFE5; --br-info:#CFE0FF;
 }
@@ -36,22 +33,21 @@ body{
 .spinner{width:48px;height:48px;border:5px solid #e6f4e5;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ===== App Bar (tap → Home) ===== */
+/* AppBar (title only, no logo) */
 .appbar{
   position:sticky;top:0;z-index:20;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  background:#fff;border-bottom:1px solid #eee;
+  display:flex;align-items:center;justify-content:center;
+  gap:8px;background:#fff;border-bottom:1px solid #eee;
   font-size:22px;font-weight:800;padding:10px;cursor:pointer;
 }
-.appbar img{width:36px;height:36px;border-radius:8px}
 
-/* ===== Views ===== */
+/* Views */
 .view{display:none}
 .view.active{display:block}
 
-/* ===== Home ===== */
+/* Home */
 .home-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center}
-.home-logo img{width:72px;height:72px;margin-bottom:18px;border-radius:16px;box-shadow:var(--shadow)}
+.home-logo img{width:96px;height:96px;margin-bottom:18px;border-radius:16px;box-shadow:var(--shadow)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:420px}
 .card{
   background:#fff;border-radius:16px;padding:20px;
@@ -60,7 +56,7 @@ body{
   font-weight:700;font-size:18px;min-height:100px;cursor:pointer;
 }
 
-/* ===== Stage Grid (centered) ===== */
+/* Stage Grid (center) */
 .stage-wrap{max-width:520px;margin:0 auto;text-align:center}
 .stage-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;justify-items:center}
 .stage{
@@ -70,13 +66,13 @@ body{
   font-size:14px;cursor:pointer;min-height:56px;width:100%;
 }
 
-/* ===== Timers ===== */
+/* Timer + progress */
 .timer-area{margin:6px 0 10px}
 .timer{text-align:center;font-weight:800;font-size:15px}
 .timebar-wrap{height:10px;background:#E3EDFF;border:1px solid var(--br-info);border-radius:999px;overflow:hidden;margin-top:6px}
 .timebar{height:10px;background:linear-gradient(90deg,var(--info),#80b7ff);width:100%}
 
-/* ===== Inline feedback (under timer) ===== */
+/* Inline feedback under timer */
 .feedback{
   display:none;margin:8px auto 0;max-width:520px;text-align:center;
   padding:8px 12px;border-radius:12px;box-shadow:var(--shadow);font-weight:800;font-size:14px
@@ -84,7 +80,7 @@ body{
 .feedback.ok{background:#eaf8e0;color:#2d7d00;border:1px solid #cdecbc}
 .feedback.bad{background:#ffe7ea;color:#b33444;border:1px solid #ffc8d0}
 
-/* ===== Study ===== */
+/* Study */
 .study-card{
   background:#fff;border-radius:16px;padding:22px;border:1px solid var(--br);
   box-shadow:var(--shadow);text-align:center;min-height:360px;
@@ -94,21 +90,22 @@ body{
 .word-wrap{width:100%;display:flex;align-items:center;justify-content:center;min-height:80px}
 .word{
   font-weight:900;cursor:pointer;line-height:1.05;white-space:nowrap;max-width:100%;
-  font-size:68px; /* 시작값, 이후 JS로 자동 축소 */
+  font-size:68px;
 }
 .meta{display:flex;gap:10px;align-items:center;justify-content:center;color:#555;font-size:16px}
 .meaning{background:#FFF8EC;border:1px dashed #FFD166;padding:12px;border-radius:12px;width:100%;font-size:16px}
 .example{
   background:#F6FBFF;border:1px dashed var(--br-info);padding:12px;border-radius:12px;width:100%;
-  font-size:15px;line-height:1.6;min-height:78px; /* ≈ 3줄 */
-  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:15px;line-height:1.6;min-height:78px;display:flex;align-items:center;justify-content:center;text-align:center;
 }
-.tts-btn{
-  border:none;background:#ffffff;padding:10px 14px;margin-top:8px;border-radius:12px;cursor:pointer;
-  box-shadow:var(--shadow);border:1px solid var(--br);font-weight:800
+.tts-row{display:flex;gap:8px;justify-content:center}
+.btn{
+  border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;
+  box-shadow:var(--shadow);background:#fff;border:1px solid var(--br)
 }
+.btn-primary{background:var(--primary);color:#fff;border:none}
 
-/* Bottom nav (Study only) */
+/* Bottom nav (Study) */
 .bottom-bar{
   position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid #eee;
   display:flex;gap:10px;padding:10px 16px
@@ -120,7 +117,7 @@ body{
 .prev-btn{background:#fff;color:var(--primary);border:2px solid var(--primary)}
 .next-btn{background:var(--primary);color:#fff}
 
-/* ===== Quiz ===== */
+/* Quiz */
 .quiz-wrap{display:flex;align-items:center;justify-content:center;min-height:60vh}
 .quiz-card{
   background:#fff;border-radius:16px;border:1px solid var(--br);box-shadow:var(--shadow);
@@ -137,7 +134,8 @@ body{
 </style>
 </head>
 <body>
-<div class="appbar" id="titleBtn"><img src="logo.png" alt="logo">Voca Han&Hyo</div>
+<!-- Title without logo image -->
+<div class="appbar" id="titleBtn">Voca Han&Hyo</div>
 
 <!-- Loader -->
 <div id="loader" class="center" style="height:60vh"><div class="spinner" aria-label="Loading"></div></div>
@@ -151,10 +149,13 @@ body{
         <button class="card" id="goStudy">📘 Study</button>
         <button class="card" id="goQuiz">📝 Quiz</button>
       </div>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" id="enableTTS">🔊 발음 활성화</button>
+      </div>
     </div>
   </section>
 
-  <!-- Stage selects (centered) -->
+  <!-- Stage selects -->
   <section id="studySelectView" class="view">
     <div class="stage-wrap">
       <h3>Choose a Stage</h3>
@@ -181,7 +182,9 @@ body{
       <div class="meta"><span id="sPron"></span><span id="sIpa"></span></div>
       <div class="meaning" id="sMeaning"></div>
       <div class="example" id="sExample">—</div>
-      <button class="tts-btn" id="playTts">🔊 발음 듣기</button>
+      <div class="tts-row">
+        <button class="btn" id="playTts">🔊 발음 듣기</button>
+      </div>
     </div>
   </section>
 
@@ -209,7 +212,7 @@ body{
   </section>
 </div>
 
-<!-- Bottom Prev/Next for Study -->
+<!-- Bottom Prev/Next (Study only) -->
 <div class="bottom-bar hidden" id="bottomBar">
   <button class="prev-btn" id="prevBtn">← 이전</button>
   <button class="next-btn" id="nextBtn">다음 →</button>
@@ -221,7 +224,7 @@ body{
 /* ===== Utilities ===== */
 const el=id=>document.getElementById(id);
 const fmt=s=>{const m=Math.floor(s/60),ss=s%60;return m.toString().padStart(2,'0')+":"+ss.toString().padStart(2,'0');}
-function inlineFeedback(node, ok, msg){
+function feedback(node, ok, msg){
   node.textContent = msg || (ok?'정답!':'오답');
   node.className = 'feedback ' + (ok?'ok':'bad');
   node.style.display='block';
@@ -229,20 +232,42 @@ function inlineFeedback(node, ok, msg){
   node._t=setTimeout(()=>node.style.display='none',1200);
 }
 
-/* Robust TTS */
-let voices=[];
+/* ===== Robust TTS (unlock flow) ===== */
+let voices=[], ttsUnlocked=false;
 function loadVoices(){ voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
-if('speechSynthesis' in window){
-  loadVoices();
-  window.speechSynthesis.onvoiceschanged = loadVoices;
+function unlockTTS(){
+  if(!('speechSynthesis' in window)) return false;
+  try{
+    window.speechSynthesis.cancel();
+    // tiny, muted utterance to satisfy gesture requirement (iOS/Safari)
+    const u=new SpeechSynthesisUtterance(' ');
+    u.volume=0; u.rate=1; u.pitch=1; u.lang='en-US';
+    window.speechSynthesis.speak(u);
+    window.speechSynthesis.resume();
+    ttsUnlocked=true;
+    return true;
+  }catch(e){ return false; }
 }
 function speak(word){
   if(!word || !('speechSynthesis' in window)) return;
+  if(!ttsUnlocked) { /* try auto-unlock on first usage */ unlockTTS(); }
   const u=new SpeechSynthesisUtterance(word);
   u.lang='en-US'; u.rate=0.95; u.pitch=1.0;
   const v = voices.find(v=>/en(-|_)?US/i.test(v.lang)) || voices.find(v=>/^en/i.test(v.lang));
   if(v) u.voice=v;
-  try{ window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);}catch(e){}
+  try{
+    // Some browsers ignore immediate speak after cancel; delay a tick
+    window.speechSynthesis.cancel();
+    setTimeout(()=>{ window.speechSynthesis.resume(); window.speechSynthesis.speak(u); }, 30);
+  }catch(e){}
+}
+if('speechSynthesis' in window){
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+  // Extra unlock hooks
+  ['click','touchstart'].forEach(ev=>{
+    window.addEventListener(ev, ()=>{ if(!ttsUnlocked) unlockTTS(); }, {once:false,capture:true});
+  });
 }
 
 /* ===== App State ===== */
@@ -250,7 +275,7 @@ const PER=150, STAGES=30;
 const WORDS_XLSX_URL="./word_list.xlsx";
 let data=[], stage=1, idx=0, timer=null, remain=1800;
 
-/* ===== View helpers ===== */
+/* ===== Views ===== */
 function switchView(v){
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   v.classList.add('active');
@@ -281,7 +306,6 @@ async function loadExcel(){
     const body=(hs.has('word')||hs.has('meaning_ko'))? rows.slice(1): rows;
     return body.map(r=>({word:(r[0]||'').toString().trim(),meaning:(r[1]||'').toString().trim(),pron:(r[2]||'').toString().trim(),ipa:(r[3]||'').toString().trim(),ex:(r[4]||'').toString().trim()})).filter(x=>x.word);
   }catch(e){
-    // Demo fallback
     return [
       {word:'enthusiastic',meaning:'열광적인, 열렬한',pron:'인쑤지애스틱',ipa:'/ɪnˌθjuːziˈæstɪk/',ex:'The audience was enthusiastic about the presentation.'},
       {word:'abandon',meaning:'버리다, 포기하다',pron:'어밴던',ipa:'əˈbændən',ex:'He had to abandon the plan.'},
@@ -318,7 +342,6 @@ function fitWord(){
   let size = 68, min=28;
   wrap.style.fontSize=size+'px';
   const parent = wrap.parentElement; // .word-wrap
-  // 줄어들 때까지 반복(가로/세로 모두 체크)
   while((wrap.scrollWidth > parent.clientWidth*0.92 || wrap.scrollHeight > 80) && size>min){
     size -= 2; wrap.style.fontSize=size+'px';
   }
@@ -332,7 +355,6 @@ function renderStudy(){
   el('sIpa').textContent=w.ipa||'';
   el('sMeaning').textContent=w.meaning||'';
   el('sExample').textContent=w.ex||'';
-  // fit after DOM paints
   requestAnimationFrame(fitWord);
 }
 el('sWord').addEventListener('click', ()=> speak(el('sWord').textContent));
@@ -351,7 +373,7 @@ function startQuiz(n){
 function normalizeKoPieces(s){return (s||'').split(',').map(x=>x.replace(/\s+/g,'')).filter(Boolean);}
 function renderQuiz(){
   const list=data.slice((stage-1)*PER, stage*PER);
-  const w=list[idx]; if(!w){ inlineFeedback(el('quizFeedback'), true, '퀴즈 종료!'); return;}
+  const w=list[idx]; if(!w){ feedback(el('quizFeedback'), true, '퀴즈 종료!'); return;}
   const type=Math.random()<0.5?0:1; // 0: KO→EN, 1: EN→KO
   el('qProgress').textContent=(idx+1)+"/"+list.length;
   el('qInput').value=''; el('qHint').style.display='none';
@@ -361,7 +383,7 @@ function renderQuiz(){
     el('qHint').textContent=w.ex || '예문 없음';
     el('qSubmit').onclick=()=>{
       const ok=(el('qInput').value||'').trim().toLowerCase() === (w.word||'').toLowerCase();
-      inlineFeedback(el('quizFeedback'), ok, ok?'정답!':('오답: '+w.word));
+      feedback(el('quizFeedback'), ok, ok?'정답!':('오답: '+w.word));
       idx++; renderQuiz();
     };
   }else{
@@ -371,7 +393,7 @@ function renderQuiz(){
       const user=(el('qInput').value||'').replace(/\s+/g,'');
       const answers=normalizeKoPieces(w.meaning);
       const ok=answers.some(a=>a && (a===user || a.includes(user) || user.includes(a)));
-      inlineFeedback(el('quizFeedback'), ok, ok?'정답!':('오답: '+(w.meaning||'-')));
+      feedback(el('quizFeedback'), ok, ok?'정답!':('오답: '+(w.meaning||'-')));
       idx++; renderQuiz();
     };
   }
@@ -383,14 +405,27 @@ el('qInput').addEventListener('keydown', e=>{ if(e.key==='Enter') el('qSubmit').
 el('goStudy').addEventListener('click', ()=>{ switchView(el('studySelectView')); });
 el('goQuiz').addEventListener('click',  ()=>{ switchView(el('quizSelectView')); });
 el('titleBtn').addEventListener('click', ()=>{ switchView(el('homeView')); el('bottomBar').classList.add('hidden'); });
+el('enableTTS').addEventListener('click', ()=>{
+  if(unlockTTS()){ el('enableTTS').textContent='🔊 발음 활성화됨'; el('enableTTS').disabled=true; }
+});
 
 /* ===== Init ===== */
 (async()=>{
-  data = await loadExcel();
-  buildStageGrid(el('studyStageGrid'), startStudy);
-  buildStageGrid(el('quizStageGrid'),  startQuiz);
-  el('loader').classList.add('hidden');
-  el('app').classList.remove('hidden');
+  if('speechSynthesis' in window){
+    loadVoices();
+    // try to pre-unlock on first user gesture as well
+    ['click','touchstart'].forEach(ev=>{
+      window.addEventListener(ev, ()=>{ if(!ttsUnlocked) unlockTTS(); }, {once:true,capture:true});
+    });
+  }
+  try{
+    data = await loadExcel();
+  }finally{
+    buildStageGrid(el('studyStageGrid'), startStudy);
+    buildStageGrid(el('quizStageGrid'),  startQuiz);
+    el('loader').classList.add('hidden');
+    el('app').classList.remove('hidden');
+  }
 })();
 </script>
 </body>
