@@ -14,6 +14,8 @@
   font-weight: normal;
   font-display: swap;
 }
+
+/* ===== Theme ===== */
 :root{
   --primary:#58CC02; --accent:#FFD166;
   --text:#233042; --bg:#F7FAF7; --white:#fff;
@@ -29,6 +31,9 @@ body{
 }
 .container{max-width:900px;margin:0 auto;padding:16px 16px 120px}
 .hidden{display:none!important}
+.center{display:grid;place-items:center}
+.spinner{width:48px;height:48px;border:5px solid #e6f4e5;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* ===== App Bar (tap → Home) ===== */
 .appbar{
@@ -54,13 +59,14 @@ body{
   font-weight:700;font-size:18px;min-height:100px;cursor:pointer;
 }
 
-/* ===== Stage Grid (smaller) ===== */
-.stage-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+/* ===== Stage Grid (centered, smaller tiles) ===== */
+.stage-wrap{max-width:520px;margin:0 auto;text-align:center}
+.stage-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;justify-items:center}
 .stage{
   background:#fff;border-radius:10px;padding:12px;
   box-shadow:0 4px 12px rgba(0,0,0,.06);border:1px solid var(--br);
   display:flex;align-items:center;justify-content:center;
-  font-size:14px;cursor:pointer;min-height:56px;
+  font-size:14px;cursor:pointer;min-height:56px;width:100%;
 }
 
 /* ===== Study ===== */
@@ -70,15 +76,19 @@ body{
   box-shadow:var(--shadow);text-align:center;min-height:360px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px
 }
-.word-index{font-size:13px;opacity:.7;margin-bottom:4px}
-.word{font-size:68px;font-weight:900;cursor:pointer}
+.word-index{font-size:13px;opacity:.7;margin-bottom:2px}
+.word{
+  font-size:68px;font-weight:900;cursor:pointer;line-height:1.05;
+  white-space:nowrap; /* auto-fit에서 한 줄 유지 */
+}
 .meta{display:flex;gap:10px;align-items:center;justify-content:center;color:#555;font-size:16px}
 .meaning{
   background:#FFF8EC;border:1px dashed #FFD166;padding:12px;border-radius:12px;width:100%;font-size:16px
 }
 .example{
   background:#F6FBFF;border:1px dashed var(--br-info);padding:12px;border-radius:12px;width:100%;
-  font-size:15px;line-height:1.6;min-height:72px /* ≈ 3줄 */;overflow:hidden
+  font-size:15px;line-height:1.6;min-height:78px; /* ≈ 3줄 */
+  display:flex;align-items:center;justify-content:center;text-align:center;
 }
 
 /* Bottom nav (Study only) */
@@ -94,12 +104,13 @@ body{
 .next-btn{background:var(--primary);color:#fff}
 
 /* ===== Quiz ===== */
+.quiz-wrap{display:flex;align-items:center;justify-content:center;min-height:62vh}
 .quiz-card{
   background:#fff;border-radius:16px;border:1px solid var(--br);box-shadow:var(--shadow);
-  padding:22px;max-width:520px;margin:0 auto;text-align:center
+  padding:22px;max-width:520px;width:100%;text-align:center
 }
-.quiz-q{font-weight:900;margin-bottom:6px}
-.quiz-answer{margin-bottom:8px}
+.quiz-progress{font-weight:900;margin-bottom:6px}
+.quiz-target{margin-bottom:8px}
 .input-row{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:10px}
 .input-row input{flex:1;padding:10px 12px;border:1px solid #ccc;border-radius:10px;font-size:16px}
 .btn-sm{padding:9px 12px;border:none;border-radius:10px;font-size:14px;cursor:pointer}
@@ -112,11 +123,6 @@ body{
   position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100;
   background:#233042;color:#fff;padding:10px 16px;border-radius:12px;box-shadow:var(--shadow);font-size:14px;display:none
 }
-
-/* ===== Loader ===== */
-.center{display:grid;place-items:center}
-.spinner{width:48px;height:48px;border:5px solid #e6f4e5;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -131,20 +137,24 @@ body{
     <div class="home-wrap">
       <div class="home-logo"><img src="logo.png" alt="logo"></div>
       <div class="grid2">
-        <button class="card" id="goStudy">📘 단어 암기</button>
-        <button class="card" id="goQuiz">📝 퀴즈</button>
+        <button class="card" id="goStudy">📘 Study</button>
+        <button class="card" id="goQuiz">📝 Quiz</button>
       </div>
     </div>
   </section>
 
-  <!-- Stage selects (hidden by default) -->
+  <!-- Stage selects (centered) -->
   <section id="studySelectView" class="view">
-    <h3>학습 단계 선택</h3>
-    <div class="stage-grid" id="studyStageGrid"></div>
+    <div class="stage-wrap">
+      <h3>Choose a Stage</h3>
+      <div class="stage-grid" id="studyStageGrid"></div>
+    </div>
   </section>
   <section id="quizSelectView" class="view">
-    <h3>퀴즈 단계 선택</h3>
-    <div class="stage-grid" id="quizStageGrid"></div>
+    <div class="stage-wrap">
+      <h3>Choose a Stage</h3>
+      <div class="stage-grid" id="quizStageGrid"></div>
+    </div>
   </section>
 
   <!-- Study -->
@@ -152,27 +162,29 @@ body{
     <div class="timer" id="studyTimer">남은 시간: 30:00</div>
     <div class="study-card">
       <div class="word-index" id="wordIndex">1/150</div>
-      <div class="word" id="sWord" title="클릭하면 발음이 재생됩니다">word</div>
+      <div class="word" id="sWord" title="Tap to hear">word</div>
       <div class="meta"><span id="sPron"></span><span id="sIpa"></span></div>
-      <div class="meaning" id="sMeaning">뜻</div>
-      <div class="example" id="sExample">예문</div>
+      <div class="meaning" id="sMeaning"></div>
+      <div class="example" id="sExample">—</div>
     </div>
   </section>
 
   <!-- Quiz -->
   <section id="quizView" class="view">
     <div class="timer" id="quizTimer">남은 시간: 30:00</div>
-    <div class="quiz-card">
-      <div class="quiz-q" id="qPrompt">—</div>
-      <div class="quiz-answer" id="qMeaning">—</div>
-      <div class="input-row">
-        <input id="qInput" placeholder="정답 입력"/>
+    <div class="quiz-wrap">
+      <div class="quiz-card">
+        <div class="quiz-progress" id="qProgress">1/150</div>
+        <div class="quiz-target" id="qTarget">—</div>
+        <div class="input-row">
+          <input id="qInput" placeholder="정답 입력"/>
+        </div>
+        <div class="input-row">
+          <button class="btn-sm btn-submit" id="qSubmit">제출</button>
+          <button class="btn-sm btn-hint" id="qHintBtn">힌트</button>
+        </div>
+        <div class="hint" id="qHint">예문</div>
       </div>
-      <div class="input-row">
-        <button class="btn-sm btn-submit" id="qSubmit">제출</button>
-        <button class="btn-sm btn-hint" id="qHintBtn">힌트</button>
-      </div>
-      <div class="hint" id="qHint">예문</div>
     </div>
   </section>
 </div>
@@ -193,11 +205,9 @@ const el=id=>document.getElementById(id);
 const showToast=msg=>{const t=el('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',1400);}
 const fmt=s=>{const m=Math.floor(s/60),ss=s%60;return m.toString().padStart(2,'0')+":"+ss.toString().padStart(2,'0');}
 
-/* Robust TTS: pick en-US voice if available; ensure user gesture triggers */
+/* Robust TTS: ensure voice list & select en-US when available */
 let voices=[];
-function loadVoices(){
-  voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-}
+function loadVoices(){ voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
 if('speechSynthesis' in window){
   loadVoices();
   window.speechSynthesis.onvoiceschanged = loadVoices;
@@ -223,7 +233,7 @@ function switchView(v){
   window.scrollTo({top:0});
 }
 
-/* ===== Build stage grids (numbers only) ===== */
+/* ===== Stage grids ===== */
 function buildStageGrid(container, onClick){
   container.innerHTML='';
   for(let i=1;i<=STAGES;i++){
@@ -243,7 +253,6 @@ async function loadExcel(){
     const ab=await r.arrayBuffer();
     const wb=XLSX.read(ab,{type:'array'});
     const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:""});
-    // header auto detect
     const hdr=rows[0]||[]; const hs=new Set(hdr.map(v=>String(v).trim().toLowerCase()));
     const body=(hs.has('word')||hs.has('meaning_ko'))? rows.slice(1): rows;
     return body.map(r=>({word:(r[0]||'').toString().trim(),meaning:(r[1]||'').toString().trim(),pron:(r[2]||'').toString().trim(),ipa:(r[3]||'').toString().trim(),ex:(r[4]||'').toString().trim()})).filter(x=>x.word);
@@ -257,7 +266,7 @@ async function loadExcel(){
   }
 }
 
-/* ===== Study ===== */
+/* ===== Timers ===== */
 function startTimer(labelId){
   if(timer) clearInterval(timer);
   remain=1800;
@@ -268,12 +277,23 @@ function startTimer(labelId){
     if(remain<=0){ clearInterval(timer); showToast('시간 종료'); }
   },1000);
 }
+
+/* ===== Study ===== */
 function startStudy(n){
   stage=n; idx=0;
   el('bottomBar').classList.remove('hidden');
   switchView(el('studyView'));
   startTimer('studyTimer');
   renderStudy();
+}
+function autoFitWord(){
+  const node=el('sWord');
+  let size=68, min=28;
+  node.style.fontSize=size+'px';
+  // 두 번 정도 시도: 가로/세로 둘 다 박스에 맞게
+  while((node.scrollWidth>node.clientWidth || node.scrollHeight>80) && size>min){
+    size-=2; node.style.fontSize=size+'px';
+  }
 }
 function renderStudy(){
   const list=data.slice((stage-1)*PER, stage*PER);
@@ -284,12 +304,13 @@ function renderStudy(){
   el('sIpa').textContent=w.ipa||'';
   el('sMeaning').textContent=w.meaning||'';
   el('sExample').textContent=w.ex||'';
+  requestAnimationFrame(autoFitWord);
 }
 el('sWord').addEventListener('click', ()=> speak(el('sWord').textContent));
 el('prevBtn').addEventListener('click', ()=>{ idx=Math.max(0,idx-1); renderStudy(); });
 el('nextBtn').addEventListener('click', ()=>{ idx++; renderStudy(); });
 
-/* ===== Quiz (KO↔EN mix, comma-partial allowed) ===== */
+/* ===== Quiz (KO↔EN mix, comma partial) ===== */
 function startQuiz(n){
   stage=n; idx=0;
   el('bottomBar').classList.add('hidden');
@@ -302,20 +323,19 @@ function renderQuiz(){
   const list=data.slice((stage-1)*PER, stage*PER);
   const w=list[idx]; if(!w){ showToast('퀴즈 종료'); return;}
   const type=Math.random()<0.5?0:1; // 0: KO→EN, 1: EN→KO
+  el('qProgress').textContent=(idx+1)+"/"+list.length;
   el('qInput').value=''; el('qHint').style.display='none';
 
   if(type===0){
-    el('qPrompt').textContent='뜻을 보고 영단어를 입력하세요';
-    el('qMeaning').textContent=w.meaning || '뜻 정보 없음';
+    el('qTarget').textContent=w.meaning || '뜻 정보 없음';
     el('qHint').textContent=w.ex || '예문 없음';
     el('qSubmit').onclick=()=>{
-      const ok=(el('qInput').value||'').trim().toLowerCase()=== (w.word||'').toLowerCase();
+      const ok=(el('qInput').value||'').trim().toLowerCase() === (w.word||'').toLowerCase();
       showToast(ok?'정답!':'오답: '+w.word);
       idx++; renderQuiz();
     };
   }else{
-    el('qPrompt').textContent='영단어를 보고 뜻(하나만) 입력하세요';
-    el('qMeaning').textContent=w.word || '-';
+    el('qTarget').textContent=w.word || '-';
     el('qHint').textContent=w.ex || '예문 없음';
     el('qSubmit').onclick=()=>{
       const user=(el('qInput').value||'').replace(/\s+/g,'');
@@ -329,16 +349,16 @@ function renderQuiz(){
 el('qHintBtn').addEventListener('click', ()=>{ const h=el('qHint'); h.style.display=h.style.display==='none'?'block':'none'; });
 el('qInput').addEventListener('keydown', e=>{ if(e.key==='Enter') el('qSubmit').click(); });
 
-/* ===== Stage grid & navigation ===== */
+/* ===== Navigation ===== */
 el('goStudy').addEventListener('click', ()=>{ switchView(el('studySelectView')); });
-el('goQuiz').addEventListener('click', ()=>{ switchView(el('quizSelectView')); });
+el('goQuiz').addEventListener('click',  ()=>{ switchView(el('quizSelectView')); });
 el('titleBtn').addEventListener('click', ()=>{ switchView(el('homeView')); el('bottomBar').classList.add('hidden'); });
 
 /* ===== Init ===== */
 (async()=>{
   data = await loadExcel();
   buildStageGrid(el('studyStageGrid'), startStudy);
-  buildStageGrid(el('quizStageGrid'), startQuiz);
+  buildStageGrid(el('quizStageGrid'),  startQuiz);
   el('loader').classList.add('hidden');
   el('app').classList.remove('hidden');
 })();
