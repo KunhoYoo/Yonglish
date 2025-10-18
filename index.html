@@ -74,9 +74,23 @@ display:flex;align-items:center;justify-content:center;font-weight:800;font-size
 .quiz-wrap{display:flex;align-items:center;justify-content:center;min-height:60vh}
 .quiz-card{position:relative;background:#fff;border-radius:16px;border:1px solid var(--br);box-shadow:var(--shadow);
 padding:22px;max-width:520px;width:100%;text-align:center;overflow:hidden;transition:transform .15s}
-.quiz-card.shake{animation:shake .3s}
+.q-target-wrap{width:100%;display:flex;align-items:center;justify-content:center;min-height:90px}
+.q-target{font-weight:900;line-height:1.1;max-width:100%;white-space:nowrap;font-size:54px}
+.input-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px}
+.input-row input{flex:1;padding:12px 14px;border:1px solid #ccc;border-radius:12px;font-size:17px}
+
+/* Buttons (bigger) */
+.btn-sm{flex:1;border:none;border-radius:12px;padding:14px 0;font-weight:700;font-size:18px;cursor:pointer;transition:.2s}
+.btn-submit{background:#58CC02;color:#fff}
+.btn-hint{background:#FFD166;color:#222}
+
+/* Hint */
+.hint{background:#FFF8EC;border:1px dashed #FFD166;padding:10px;border-radius:10px;margin-top:12px;font-size:14px;display:none}
+
+/* Shake + Flash effects */
 @keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-8px);}40%,80%{transform:translateX(8px);}}
-.quiz-card.flash-correct{animation:flashGreen 0.7s ease}
+.shake{animation:shake .3s} /* 전역으로 사용 */
+.quiz-card.flash-correct{animation:flashGreen .7s ease}
 @keyframes flashGreen{
   0%{background:#fff;}
   25%{background:#d4f8c4;}
@@ -84,15 +98,6 @@ padding:22px;max-width:520px;width:100%;text-align:center;overflow:hidden;transi
   75%{background:#d4f8c4;}
   100%{background:#fff;}
 }
-.quiz-progress{font-weight:900;margin-bottom:8px}
-.q-target-wrap{width:100%;display:flex;align-items:center;justify-content:center;min-height:90px}
-.q-target{font-weight:900;line-height:1.1;max-width:100%;white-space:nowrap;font-size:54px}
-.input-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px}
-.input-row input{flex:1;padding:12px 14px;border:1px solid #ccc;border-radius:12px;font-size:17px}
-.btn-sm{flex:1;border:none;border-radius:12px;padding:14px 0;font-weight:700;font-size:18px;cursor:pointer;transition:.2s}
-.btn-submit{background:#58CC02;color:#fff}
-.btn-hint{background:#FFD166;color:#222}
-.hint{background:#FFF8EC;border:1px dashed #FFD166;padding:10px;border-radius:10px;margin-top:12px;font-size:14px;display:none}
 
 /* Stars */
 .star{position:absolute;pointer-events:none;opacity:0;transform:scale(.6);animation:pop .8s ease forwards}
@@ -211,7 +216,6 @@ canvas{max-width:260px;width:100%;height:auto}
   <button class="next-btn" id="nextBtn">다음 →</button>
 </div>
 
-<!-- SheetJS -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 /* ===== helpers ===== */
@@ -220,7 +224,7 @@ const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStar
 function switchView(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active')); v.classList.add('active'); window.scrollTo({top:0});}
 function feedback(node,ok,msg){node.textContent=msg||(ok?'정답!':'오답');node.classList.remove('ok','bad','show');node.classList.add(ok?'ok':'bad','show');clearTimeout(node._t);node._t=setTimeout(()=>node.classList.remove('show'),1200);}
 
-/* ===== sound files (RELATIVE PATHS!) ===== */
+/* ===== sound files (relative paths) ===== */
 const sounds={
   correct:new Audio('sounds/correct.wav'),
   wrong:new Audio('sounds/wrong.wav'),
@@ -256,7 +260,7 @@ let data=[], stage=1, idx=0, timer=null, remain=1800;
 /* Stage grids */
 function buildStageGrid(container, onClick){container.innerHTML='';for(let i=1;i<=STAGES;i++){const b=document.createElement('button');b.className='stage';b.textContent=String(i).padStart(2,'0');b.onclick=()=>onClick(i);container.appendChild(b);}}
 
-/* Excel loader (fallback demo on error) */
+/* Excel loader */
 async function loadExcel(){
   try{
     const r=await fetch(WORDS_XLSX_URL,{cache:'no-store'});
@@ -298,10 +302,29 @@ el('nextBtn').onclick=()=>{idx++;renderStudy();};
 /* ===== Quiz ===== */
 let quizList=[], quizStats={total:0,correct:0,wrong:0,wrongItems:[]}, qMode='KO2EN', qItem=null, streak=0;
 function startQuiz(n){stage=n; quizList=data.slice((stage-1)*PER, stage*PER); startQuizWithList(quizList);}
-function startQuizWithList(list){quizList=list.slice(); idx=0; streak=0; quizStats={total:quizList.length,correct:0,wrong:0,wrongItems:[]}; el('bottomBar').classList.add('hidden'); switchView(el('quizView')); startTimer('quizTimer','quizBar'); renderQuiz();}
+function resetCardEffects(){ const card=el('quizCard'); card.classList.remove('flash-correct','shake'); el('qInput').classList.remove('shake'); }
+function startQuizWithList(list){
+  quizList=list.slice(); idx=0; streak=0;
+  quizStats={total:quizList.length,correct:0,wrong:0,wrongItems:[]};
+  el('bottomBar').classList.add('hidden');
+  switchView(el('quizView'));
+  startTimer('quizTimer','quizBar');
+  resetCardEffects();  /* ✅ 초록 반짝임/쉐이크 초기화 */
+  renderQuiz();
+}
 function normalizeKoPieces(s){return (s||'').split(',').map(x=>x.replace(/\s+/g,'')).filter(Boolean);}
 function fitQuizTarget(){const t=el('qTarget'); let size=54,min=20; t.style.fontSize=size+'px'; const wrap=t.parentElement; while((t.scrollWidth>wrap.clientWidth*0.95 || t.scrollHeight>wrap.clientHeight) && size>min){ size-=2; t.style.fontSize=size+'px'; }}
-function renderQuiz(){const it=quizList[idx]; if(!it){ if(timer) clearInterval(timer); showQuizResult(); return; } qItem=it; qMode=Math.random()<0.5?'KO2EN':'EN2KO'; el('qProgress').textContent=`${idx+1}/${quizList.length}`; el('qInput').value=''; el('qHint').style.display='none'; el('qTarget').textContent = qMode==='KO2EN' ? (it.meaning||'뜻 정보 없음') : (it.word||'-'); el('qHint').textContent=it.ex||'예문 없음'; requestAnimationFrame(fitQuizTarget);}
+function renderQuiz(){
+  resetCardEffects();  /* ✅ 문제 전환 시에도 초기화 */
+  const it=quizList[idx];
+  if(!it){ if(timer) clearInterval(timer); showQuizResult(); return; }
+  qItem=it; qMode=Math.random()<0.5?'KO2EN':'EN2KO';
+  el('qProgress').textContent=`${idx+1}/${quizList.length}`;
+  el('qInput').value=''; el('qHint').style.display='none';
+  el('qTarget').textContent = qMode==='KO2EN' ? (it.meaning||'뜻 정보 없음') : (it.word||'-');
+  el('qHint').textContent=it.ex||'예문 없음';
+  requestAnimationFrame(fitQuizTarget);
+}
 el('qHintBtn').onclick=()=>{const h=el('qHint'); h.style.display=h.style.display==='none'?'block':'none';};
 
 function submitQuiz(){
@@ -316,13 +339,16 @@ function submitQuiz(){
     quizStats.correct++; streak++;
     feedback(el('quizFeedback'),true,'정답!');
     playSound(streak>=3?'continuous':'correct');
-    card.classList.remove('flash-correct'); void card.offsetWidth; card.classList.add('flash-correct');
+    card.classList.remove('flash-correct'); void card.offsetWidth; card.classList.add('flash-correct');  /* ✅ 실제 정답 때만 */
     if(streak>=3) burstStars(card);
   }else{
     quizStats.wrong++; streak=0; quizStats.wrongItems.push(qItem);
     feedback(el('quizFeedback'),false,'정답: ' + (qMode==='KO2EN'? qItem.word : (qItem.meaning||'-')));
     playSound('wrong');
-    card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+    /* ✅ 입력창 + 카드 둘 다 흔들기 */
+    el('qInput').classList.remove('shake'); card.classList.remove('shake');
+    void el('qInput').offsetWidth; void card.offsetWidth;  /* reflow */
+    el('qInput').classList.add('shake'); card.classList.add('shake');
   }
   idx++; renderQuiz();
 }
