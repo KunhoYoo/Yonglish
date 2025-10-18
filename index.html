@@ -31,8 +31,17 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:'GabiaSai',syst
 .home-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center}
 .home-logo img{width:180px;height:180px;margin-bottom:18px;border-radius:24px;box-shadow:var(--shadow)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:460px}
-.card{background:#fff;border-radius:16px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--br);
-display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px;cursor:pointer}
+.card{
+  background:#fff;border-radius:16px;padding:18px;box-shadow:var(--shadow);border:1px solid var(--br);
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;cursor:pointer
+}
+.card .ico{font-size:28px;line-height:1}
+.card .label{
+  font-weight:900;
+  /* 화면 좁아져도 한 줄 유지 + 자동 축소 */
+  font-size:clamp(18px,4.8vw,26px);
+  white-space:nowrap;line-height:1
+}
 
 /* Stage select */
 .stage-wrap{max-width:520px;margin:0 auto;min-height:70vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
@@ -89,7 +98,7 @@ padding:22px;max-width:520px;width:100%;text-align:center;overflow:hidden;transi
 
 /* Shake + Flash effects */
 @keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-9px);}40%,80%{transform:translateX(9px);}}
-.shake{animation:shake .45s ease} /* 전역: 어떤 요소든 흔들 수 있음 */
+.shake{animation:shake .45s ease}
 .quiz-card.flash-correct{animation:flashGreen .7s ease}
 @keyframes flashGreen{
   0%{background:#fff;}
@@ -125,8 +134,8 @@ canvas{max-width:260px;width:100%;height:auto}
     <div class="home-wrap">
       <div class="home-logo"><img src="logo.png" alt="logo"></div>
       <div class="grid2">
-        <button class="card" id="goStudy">📘 STUDY</button>
-        <button class="card" id="goQuiz">📝 QUIZ</button>
+        <button class="card" id="goStudy"><span class="ico">📘</span><span class="label">STUDY</span></button>
+        <button class="card" id="goQuiz"><span class="ico">📝</span><span class="label">QUIZ</span></button>
       </div>
     </div>
   </section>
@@ -309,13 +318,13 @@ function startQuizWithList(list){
   el('bottomBar').classList.add('hidden');
   switchView(el('quizView'));
   startTimer('quizTimer','quizBar');
-  resetCardEffects(); /* ✅ 입장 시 초기화 */
+  resetCardEffects();
   renderQuiz();
 }
 function normalizeKoPieces(s){return (s||'').split(',').map(x=>x.replace(/\s+/g,'')).filter(Boolean);}
 function fitQuizTarget(){const t=el('qTarget'); let size=54,min=20; t.style.fontSize=size+'px'; const wrap=t.parentElement; while((t.scrollWidth>wrap.clientWidth*0.95 || t.scrollHeight>wrap.clientHeight) && size>min){ size-=2; t.style.fontSize=size+'px'; }}
 function renderQuiz(){
-  resetCardEffects(); /* ✅ 문제 바뀔 때도 초기화 */
+  resetCardEffects();
   const it=quizList[idx];
   if(!it){ if(timer) clearInterval(timer); showQuizResult(); return; }
   qItem=it; qMode=Math.random()<0.5?'KO2EN':'EN2KO';
@@ -341,17 +350,14 @@ function submitQuiz(){
     playSound(streak>=3?'continuous':'correct');
     card.classList.remove('flash-correct'); void card.offsetWidth; card.classList.add('flash-correct');
     if(streak>=3) burstStars(card);
-    /* ✅ 초록 반짝임 보이도록 약간 대기 후 다음 문제 */
     setTimeout(()=>{ idx++; renderQuiz(); }, 450);
   }else{
     quizStats.wrong++; streak=0; quizStats.wrongItems.push(qItem);
     feedback(el('quizFeedback'),false,'정답: ' + (qMode==='KO2EN'? qItem.word : (qItem.meaning||'-')));
     playSound('wrong');
-    /* ✅ 입력창 + 카드 둘 다 확실히 흔들기 */
     el('qInput').classList.remove('shake'); card.classList.remove('shake');
-    void el('qInput').offsetWidth; void card.offsetWidth; /* reflow */
+    void el('qInput').offsetWidth; void card.offsetWidth;
     el('qInput').classList.add('shake'); card.classList.add('shake');
-    /* ✅ 흔들림을 볼 수 있게 700ms 뒤 다음 문제 */
     setTimeout(()=>{ idx++; renderQuiz(); }, 700);
   }
 }
