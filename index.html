@@ -73,7 +73,7 @@ display:flex;align-items:center;justify-content:center;font-weight:800;font-size
 /* Quiz */
 .quiz-wrap{display:flex;align-items:center;justify-content:center;min-height:60vh}
 .quiz-card{position:relative;background:#fff;border-radius:16px;border:1px solid var(--br);box-shadow:var(--shadow);
-padding:22px;max-width:520px;width:100%;text-align:center;overflow:hidden;transition:transform .15s}
+padding:22px;max-width:520px;width:100%;text-align:center;overflow:hidden;transition:transform .15s;will-change:transform}
 .q-target-wrap{width:100%;display:flex;align-items:center;justify-content:center;min-height:90px}
 .q-target{font-weight:900;line-height:1.1;max-width:100%;white-space:nowrap;font-size:54px}
 .input-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px}
@@ -88,8 +88,8 @@ padding:22px;max-width:520px;width:100%;text-align:center;overflow:hidden;transi
 .hint{background:#FFF8EC;border:1px dashed #FFD166;padding:10px;border-radius:10px;margin-top:12px;font-size:14px;display:none}
 
 /* Shake + Flash effects */
-@keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-8px);}40%,80%{transform:translateX(8px);}}
-.shake{animation:shake .3s} /* 전역으로 사용 */
+@keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-9px);}40%,80%{transform:translateX(9px);}}
+.shake{animation:shake .45s ease} /* 전역: 어떤 요소든 흔들 수 있음 */
 .quiz-card.flash-correct{animation:flashGreen .7s ease}
 @keyframes flashGreen{
   0%{background:#fff;}
@@ -309,13 +309,13 @@ function startQuizWithList(list){
   el('bottomBar').classList.add('hidden');
   switchView(el('quizView'));
   startTimer('quizTimer','quizBar');
-  resetCardEffects();  /* ✅ 초록 반짝임/쉐이크 초기화 */
+  resetCardEffects(); /* ✅ 입장 시 초기화 */
   renderQuiz();
 }
 function normalizeKoPieces(s){return (s||'').split(',').map(x=>x.replace(/\s+/g,'')).filter(Boolean);}
 function fitQuizTarget(){const t=el('qTarget'); let size=54,min=20; t.style.fontSize=size+'px'; const wrap=t.parentElement; while((t.scrollWidth>wrap.clientWidth*0.95 || t.scrollHeight>wrap.clientHeight) && size>min){ size-=2; t.style.fontSize=size+'px'; }}
 function renderQuiz(){
-  resetCardEffects();  /* ✅ 문제 전환 시에도 초기화 */
+  resetCardEffects(); /* ✅ 문제 바뀔 때도 초기화 */
   const it=quizList[idx];
   if(!it){ if(timer) clearInterval(timer); showQuizResult(); return; }
   qItem=it; qMode=Math.random()<0.5?'KO2EN':'EN2KO';
@@ -339,18 +339,21 @@ function submitQuiz(){
     quizStats.correct++; streak++;
     feedback(el('quizFeedback'),true,'정답!');
     playSound(streak>=3?'continuous':'correct');
-    card.classList.remove('flash-correct'); void card.offsetWidth; card.classList.add('flash-correct');  /* ✅ 실제 정답 때만 */
+    card.classList.remove('flash-correct'); void card.offsetWidth; card.classList.add('flash-correct');
     if(streak>=3) burstStars(card);
+    /* ✅ 초록 반짝임 보이도록 약간 대기 후 다음 문제 */
+    setTimeout(()=>{ idx++; renderQuiz(); }, 450);
   }else{
     quizStats.wrong++; streak=0; quizStats.wrongItems.push(qItem);
     feedback(el('quizFeedback'),false,'정답: ' + (qMode==='KO2EN'? qItem.word : (qItem.meaning||'-')));
     playSound('wrong');
-    /* ✅ 입력창 + 카드 둘 다 흔들기 */
+    /* ✅ 입력창 + 카드 둘 다 확실히 흔들기 */
     el('qInput').classList.remove('shake'); card.classList.remove('shake');
-    void el('qInput').offsetWidth; void card.offsetWidth;  /* reflow */
+    void el('qInput').offsetWidth; void card.offsetWidth; /* reflow */
     el('qInput').classList.add('shake'); card.classList.add('shake');
+    /* ✅ 흔들림을 볼 수 있게 700ms 뒤 다음 문제 */
+    setTimeout(()=>{ idx++; renderQuiz(); }, 700);
   }
-  idx++; renderQuiz();
 }
 el('qSubmit').onclick=submitQuiz;
 el('qInput').addEventListener('keydown',e=>{if(e.key==='Enter') submitQuiz();});
